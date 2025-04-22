@@ -1,0 +1,1465 @@
+﻿SQL Interview Questions BY qfles.com/interview-question/sql-server-interview-questions
+==========================================
+
+Q1: What are the ACID properties? Explain each of them.
+------------------------------------------
+ACID is a set of four properties. Let's understand each of them.
+
+A - Atomicity ensures that each transaction is in a state of "all" or "nothing" means if one part of the transaction fails, the entire transaction fails and the database state is left unchanged. An atomic system must guarantee atomicity in every situation, including errors, crashes and power failures, .
+C - Consistency confirms that any database transaction will bring the database from one valid state to another. Any data written to the database must be valid as per all defined rules, including cascades, constraints, triggers, and any combination thereof.
+I - Isolation property ensures that the concurrent execution of transactions should not mix with each other and transactions result in a state that looks like transactions were processed serially, i.e. one after the other. Many data users can access the same data at the same time with lower isolation level but it increases the chances of concurrency effects that users might experience.
+D - Durability ensures that once a database transaction has been committed, it will remain so, even in the event of power loss, crashes, or errors. In RDBMS, once a group of SQL statements execute, the results need to be stored permanently in the database even if the database crashes immediately thereafter. To defend against power loss or any database crash, all transactions and their effects must be recorded in a non-volatile memory.
+
+
+Q2: 2. What is UNION in SQL Server? How will you differentiate it from UNION ALL?
+------------------------------------------------------------------------------------
+
+UNION merges the contents of two tables which are structurally compatible into a single combined table.
+The difference is that UNION removes duplicate records whereas UNION ALL includes duplicate records.
+UNION ALL has better performance then UNION, since UNION requires the server to do the extra work of eliminating any duplicates. So, in the cases where it is certain that there will not be any duplicates, or where having duplicates is not a problem, use of UNION ALL would be recommended for better performance.
+
+Q3:What is the difference between the WHERE and HAVING clauses? What is Group by clause?
+------------------------------------------------------------------------------------
+Where clause is used to filter the records from a result set. Filtering occurs before any grouping is made. It works with select clauses. it does not work with aggregate functions or GROUP BY statements.
+
+Select * from Employee Where Id > 10;
+
+Having Clause is used to filter the records from groups. It works with group by clause and works on aggregate functions.
+Select Name, Salary from Employee 
+Group by Name, Salary   
+Having SUM(Salary)  > 10000; 
+
+Group by clause is used to display the data in the form of identical groups. It is used with a SELECT Clause to group the result set by one or more columns.
+Select col1, col2, from table 
+group by col1, col2
+
+
+
+Q4: How to delete Duplicate Records in SQL Server?
+------------------------------------------------------------------------------------
+
+	With CTE AS (
+  select *,RN = ROW_NUMBER() over(partition by id Order by id) from Employee1
+  )
+
+  delete from CTE where RN>1;
+
+
+Q5: Explain Row_Number, RANK and DENSE_Rank in SQL Server.
+------------------------------------------------------------------------------------
+
+Row_Number() is used to return a unique sequential number for each row starting from 1. 
+If the partition clause is used with Row_Number then it reset sequential numbers for each partition. It does not skip or repeat the numbers in result.
+
+RANK() is used to return a unique number for each distinct row starting from 1, within the partition 
+if a partition clause is used. It starts at 1 in each partition. It sets the same rank for duplicate data and leaves the gaps in the rank sequence after duplicate values.
+
+DENSE_RANK() has similar behavior like the RANK function but there is one difference that it does not leave the gaps in sequential rank after duplicate values.
+For example, consider the set {5, 5, 10, 15, 15, 20}. So here RANK() will return {1, 1, 3, 4, 4, 6} 
+(note that the values 2 and 5 are skipped because of duplicate values assigned same rank and after duplication values there will be gap in rank), whereas DENSE_RANK() will return {1,1,2,3,3,4}.
+
++++++++++++++++++++++
+;with CTE AS(select *, ROW_NUMBER() over(partition by Name,Salary order by Id) as RN from Employee)
+select * from CTE
+--select * from CTE where RN>1     -- here you can delete duplicate records where RN>1
+-- delete from CTE where RN>1
+
+
+select *, ROW_NUMBER() over(order by Id) as RN from Employee
+select *, ROW_NUMBER() over(partition by Name,Salary order by Id) as RN from Employee
+
+
+select *, RANK() over(order by Name) as rn from Employee
+select *, RANK() over(partition by Name order by Name) as rn from Employee
+
+
+select *, Dense_RANK() over(order by Name) as rn from Employee
+select *, Dense_RANK() over(partition by Salary order by Name) as rn from Employee
+
+
+-- find nth highest salary - always use dense rank as rank will skip some numbers.
+-- so it will not give any result for those skipped numbers
+select * from Employee
+;with CTE1 as (select *, RANK() over (order by salary desc) as RN from Employee)
+select top 1 * from CTE1 where RN=4   -- 4th Highest from highest to lowest
+
+select * from Employee
+;with CTE1 as (select *, DENSE_RANK() over (order by salary desc) as RN from Employee)
+select top 1 * from CTE1 where RN=2  -- 2nd highest from
+
+
+Q6: How to select top nth Records?
+------------------------------------------------------------------------------------
+
+select top 1 id from (select top 5 id from employee1 order by id desc)sub order by id asc
+
+
+
+Q7. Write a self join query with the following table structure.
+------------------------------------------------------------------------------------
+
+SELECT [id],[ename],[managerId] FROM [Practic].[dbo].[employee1]
+
+    // Self Join Example: we will fetch emp name and manager name from the same table using self join.
+
+    select e.ename, m.ename from employee1 e inner join employee1 m on e.managerId = m.id
+
+
+
+Q8. Write a query to select all the Even and Odd number records from a table.
+------------------------------------------------------------------------------------
+To select all even number records:
+
+SELECT * FROM TABLE WHERE ID % 2 = 0 
+To select all odd number records:
+Select * from table where id % 2 != 0
+
+
+Q9. Why are stored procedures fast compared to running queries by c#?
+------------------------------------------------------------------------------------
+
+Stored procedures are fast because these are in compile form, meaning no need to compile when we run it.
+Whenever we run some query by C# (ORM or ado.net) then first the query gets compiled and execution plan is created but in case of stored procedures execution plan already exists as it was already created at the time of writing stored procedures.
+
+
+Q10. What is Self Join and why is it required?
+------------------------------------------------------------------------------------
+
+Self Join provides the capability of joining one table with itself. For example, 
+you have one table 'employee' with three columns id, name, manager_id. Now you want to print the name of the employee and his manager in the same row.
+
+Q11 . What is the difference between Truncate, Delete and Drop commands?
+------------------------------------------------------------------------------------
+
+All these are the SQL commands used on the basis of different needs as below.
+
+Truncate - It's Data Definition Language (DDL) command in SQL Server. That's why the Truncate operation can not be rolled back. It's used to delete the content of a table and free the space.
+Delete - It's Data Manipulation Language (DML) command. That's why Delete operation can be rolled back. Delete command is used to delete the records from a table.
+Drop - It's Data Definition Language (DDL) command. That's why Drop operation can not be rolled back. Drop command is used to remove the object from Database.
+
+
+Q12 .  How to concatenate text from multiple rows into a single text string in SQL server? Consider the rows below.
+----------------------------------------------------------------------------------------------------------------------
+Test-1
+Test-2
+Test-3
+
+Expected O/p from above 3 rows should be - Test1, Test2, Test3
+You can achieve about output using below SQL query:
+
+    DECLARE @Names VARCHAR(8000)
+    SELECT @Names = COALESCE(@Names + ', ','') + Name
+    FROM Common.Category
+    Select @Names
+
+    // If row contain null values then Coalesce can give wrong results so handle null case as below:
+    DECLARE @Names VARCHAR(8000)
+    SELECT @Names = COALESCE(@Names + ', ','') + Name
+    FROM Common.Category Where Name IS NOT NULL
+    Select @Names
+
+    // OR
+    DECLARE @Names VARCHAR(8000)
+    SELECT @Names = COALESCE(@Names + ', ','') + ISNULL(Name, 'N/A')
+    FROM Common.Category
+    Select @Names
+
+
+Q13 . How to UPDATE from a SELECT in SQL Server?
+----------------------------------------------------------------------------------------------------------------------
+Sometimes, We need to update table data from other tables data. In this case we prefer to use select with update command as below.
+
+UPDATE Emp
+SET
+    Emp.PersonCityName = Address.City,
+    Emp.PersonPostCode = Address.PostCode
+FROM
+    Employees Emp
+INNER JOIN
+    AddressList Address ON Emp.PersonId = Address.PersonId
+
+
+
+Q14 .Could you explain the key differences between correlated and non-correlated subqueries in SQL?
+----------------------------------------------------------------------------------------------------------------------
+Correlated and Non-Correlated Subqueries: A correlated subquery is a subquery that references columns from the outer query. It is executed once for each row in the outer query, 
+while a non-correlated subquery is independent of the outer query and is executed only once.
+Example:
+
+-- Correlated Subquery
+SELECT e.EmployeeID, e.FirstName, e.LastName
+FROM Employees e
+WHERE EXISTS (
+    SELECT 1
+    FROM Orders o
+    WHERE o.EmployeeID = e.EmployeeID
+);
+
+-- Non-Correlated Subquery
+SELECT e.EmployeeID, e.FirstName, e.LastName
+FROM Employees e
+WHERE e.EmployeeID IN (
+    SELECT EmployeeID
+    FROM Orders
+    WHERE ShipCountry = 'USA'
+);
+
+Q15 .Write a query that uses the EXCEPT set operator to find records that exist in one table but not in another.
+----------------------------------------------------------------------------------------------------------------------
+
+The EXCEPT operator returns distinct rows from the left input that are not present in the right input.
+Example:
+
+-- Find those customers who have not placed any orders
+SELECT CustomerID, CompanyName
+FROM Customers
+EXCEPT
+SELECT c.CustomerID, c.CompanyName
+FROM Customers c
+INNER JOIN Orders o ON c.CustomerID = o.CustomerID;
+
+
+Q16 .How would you use a subquery to update a table based on values from another table?
+----------------------------------------------------------------------------------------------------------------------
+
+UPDATE Employees e
+SET e.ManagerID = (
+    SELECT TOP 1 EmployeeID
+    FROM Employees
+    WHERE Title = 'Manager'
+    ORDER BY EmployeeID
+)
+WHERE e.Title = 'Sales Representative';
+
+
+
+Q17 . What is an Index? Define Clustered and Non-Clustered index. when to use each type?
+----------------------------------------------------------------------------------------------------------------------
+
+An index is a database object that improves the speed of data retrieval operations on a table at the cost of additional space and slower writes.
+
+👉 Think of an index like the index at the back of a book.
+
+When you want to find a topic in a book, you don’t read the whole book — you check the index, find the page number, and go there directly.
+
+Similarly, in SQL Server, an index helps find rows faster without scanning the whole table.
+
+🔸 An index is created on one or more columns of a table or view. 🔸 It stores sorted keys (values from those columns) in a structure called a B-tree (like a smart, sorted tree). 🔸 SQL Server uses this tree to quickly jump to the data it needs.
+Clustered Index:
+
+
+Clustered vs Non-Clustered Index (Easy to Remember & Explain)
+Now let’s understand this with a simple analogy.
+
+📚 Imagine a Dictionary:
+All the words in the dictionary are arranged in alphabetical order.
+
+This order IS the data itself.
+
+✅ Clustered Index — “The Dictionary Itself”
+The data is stored in sorted order based on the index.
+
+There can be only ONE clustered index per table — because data can be sorted in only one way.
+
+It determines the physical order of the rows.
+
+🧠 How to Remember:
+
+"Clustered = Data is ordered like the index. One per table. Like the pages of a dictionary — already sorted."
+
+✅ Non-Clustered Index — “Index at the Back of a Book”
+It’s a separate structure from the data.
+
+It contains the key + a pointer to the actual row in the table.
+
+There can be many non-clustered indexes.
+
+🧠 How to Remember:
+
+"Non-Clustered = Like the index at the back of a book. Not the data itself, just points to it."
+
+🔁 Quick Recap for Interviews
+You can explain it like this in an interview:
+
+"An index in SQL Server helps speed up data retrieval, just like an index in a book helps you find a topic faster.
+A Clustered Index sorts and stores the actual data rows in the table itself, so there can only be one per table. 
+A Non-Clustered Index is like a separate lookup table that points to the data — you can have many of these. Both use a B-tree structure to make searching super fast."
+
+-- Creating a clustered index
+CREATE CLUSTERED INDEX IX_Employees_LastName
+ON Employees (LastName);
+
+-- Creating a non-clustered index
+CREATE NONCLUSTERED INDEX IX_Employees_City
+ON Employees (City);
+    
+A clustered index determines the physical order of data rows in a table, and there can only be one clustered index per table.
+In contrast, non-clustered indexes are separate structures that provide fast access to data, but the data rows themselves are not sorted based on the non-clustered index.
+
+
+
+
+Q18 .How can you determine if a query is using an index efficiently?
+----------------------------------------------------------------------------------------------------------------------
+Determining Index Usage: You can use the STATISTICS IO and STATISTICS TIME options in SQL Server Management Studio to see if a query is using an index efficiently.
+Additionally, you can examine the query execution plan to identify any missing or unused indexes.
+
+-- Example of using STATISTICS IO
+SET STATISTICS IO ON;
+SELECT * FROM Employees WHERE LastName = 'Smith';
+SET STATISTICS IO OFF;
+-- Example of using STATISTICS TIME
+SET STATISTICS TIME ON;
+SELECT * FROM Employees WHERE LastName = 'Smith';
+    
+    SET STATISTICS TIME OFF;
+    -- Example of using Execution Plan
+    SET SHOWPLAN_ALL ON;
+    SELECT * FROM Employees WHERE LastName = 'Smith';
+    SET SHOWPLAN_ALL OFF;
+
+
+
+Q19. What is a covering index? How does it improve query performance?
+----------------------------------------------------------------------------------------------------------------------
+A covering index is a non-clustered index that includes all the columns referenced in a query. This eliminates the need to access the data pages, improving query performance.
+-- Example of creating a covering index
+CREATE NONCLUSTERED INDEX IX_Orders_CustomerID_ShipCity
+ON Orders (CustomerID, ShipCity)
+INCLUDE (OrderDate, Freight);
+-- Query that can benefit from the covering index
+SELECT CustomerID, ShipCity, OrderDate, Freight
+FROM Orders
+WHERE CustomerID = 'ALFKI';
+
+
+Q20.  Write a stored procedure that accepts parameters and returns a result set.
+----------------------------------------------------------------------------------------------------------------------
+CREATE PROCEDURE GetEmployeesByCity
+  @City NVARCHAR(30)
+AS
+BEGIN
+  SELECT EmployeeID, FirstName, LastName, City
+  FROM Employees
+  WHERE City = @City;
+END;
+
+-- Executing the stored procedure
+EXEC GetEmployeesByCity @City = 'London';
+
+Q21. How can you improve Stored Procedure Performance?
+----------------------------------------------------------------------------------------------------------------------
+You should focus on certain points for your Stored Procedure performance as below.
+
+Use Proper indexing on tables.
+
+Set NOCount ON|OFF - it will control some messages like - after running some update query you see messages - '0 rows affected'.
+
+Use Select count(1) instead of count(*) for count function.
+
+do not use prefix 'SP' while creating stored procedures as default system stored procedures also starts with prefix 'SP'.
+
+Whenever it's required fetch data from the table with 'NOLOCK' keyword WITH(NOLOCK).
+
+Set ANSI_Nulls ON|OFF- When it's ON it means a select statement will return zero results even if there are null values in the column. When It's OFF means select statement will return the corresponding rows with null values in columns. When you are setting it OFF means comparison operators do not follow ISO standards.
+
+Set Quoted_Identifier ON|OFF - When it's ON means identifiers are delimited by double quotes and literals are delimited by single quotes. But when it's OFF means identifiers can not be delimited by quotation.
+
+
+Q22.Explain the difference between a scalar and a table-valued user-defined function.
+----------------------------------------------------------------------------------------------------------------------
+A scalar user-defined function returns a single value, while a table-valued user-defined function returns a table. 
+Scalar functions can be used in SELECT statements, WHERE clauses, and other expressions, while table-valued functions can be used in FROM clauses like a regular table.
+
+Scalar vs. Table-Valued User-Defined Functions: A scalar function returns a single value, while a table-valued function returns a result set that can be treated like a virtual table.
+Example:
+
+-- Scalar Function
+CREATE FUNCTION GetDiscountedPrice
+  (@Price MONEY, @DiscountPercentage FLOAT)
+RETURNS MONEY
+AS
+BEGIN
+  RETURN @Price * (1 - @DiscountPercentage);
+END;
+
+-- Table-Valued Function
+CREATE FUNCTION GetOrdersByYear
+  (@Year INT)
+RETURNS TABLE
+AS
+RETURN (
+  SELECT OrderID, CustomerID, OrderDate
+  FROM Orders
+  WHERE YEAR(OrderDate) = @Year
+);
+
+Q23. What is a trigger? How does it differ from a stored procedure?
+----------------------------------------------------------------------------------------------------------------------
+A trigger is a special type of stored procedure that automatically executes in response to certain events on a table or view, such as INSERT, UPDATE, or DELETE operations.
+Triggers are used for enforcing business rules, data validation, and maintaining referential integrity. Unlike stored procedures, triggers cannot be executed directly and do not accept parameters.
+-- Example of a trigger
+CREATE TRIGGER trgAfterInsert
+ON Employees
+AFTER INSERT
+AS
+    BEGIN
+  PRINT 'New employee added: ' + CAST((SELECT FirstName FROM inserted) AS NVARCHAR(50));
+END;
+-- Example of a stored procedure
+CREATE PROCEDURE GetEmployeeCount
+  AS
+  BEGIN
+  SELECT COUNT(*) FROM Employees;
+  END;
+  -- Executing the stored procedure
+  EXEC GetEmployeeCount;
+
+Q24. How can you handle errors and transactions within a stored procedure?
+----------------------------------------------------------------------------------------------------------------------
+
+Error Handling and Transactions in Stored Procedures: You can use TRY...CATCH blocks and RAISERROR statements to handle errors in stored procedures. For transaction management, you can use the BEGIN TRANSACTION, COMMIT, and ROLLBACK statements.
+Example:%
+
+CREATE PROCEDURE InsertOrder
+  @CustomerID NCHAR(5),
+  @OrderDate DATETIME
+AS
+BEGIN
+  BEGIN TRY
+    BEGIN TRANSACTION
+      INSERT INTO Orders (CustomerID, OrderDate)
+      VALUES (@CustomerID, @OrderDate);
+    COMMIT TRANSACTION
+  END TRY
+  BEGIN CATCH
+    ROLLBACK TRANSACTION;
+
+    -- Capture error details
+    DECLARE @ErrorMessage NVARCHAR(4000);
+    DECLARE @ErrorSeverity INT;
+    DECLARE @ErrorState INT;
+
+    SET @ErrorMessage = ERROR_MESSAGE();
+    SET @ErrorSeverity = ERROR_SEVERITY();
+    SET @ErrorState = ERROR_STATE();
+
+    RAISERROR ('Error inserting order', 16, 1);
+  END CATCH
+END;
+
+
+Q24.How to insert the result of a stored procedure into a temporary table?
+----------------------------------------------------------------------------------------------------------------------
+
+To insert the result of a stored procedure into a temporary table, you can use the INSERT INTO ... EXEC syntax in SQL Server. Here's how you can do it using the Orders and Products tables that we have created.
+
+
+CREATE TABLE #TempTable (EmployeeID INT, FirstName NVARCHAR(50), LastName NVARCHAR(50));
+INSERT INTO #TempTable
+EXEC GetEmployeesByCity @City = 'London';
+SELECT * FROM #TempTable;
+DROP TABLE #TempTable;
+
+Q24. Write a query that uses the MERGE statement to perform an insert, update, or delete operation based on conditions.
+-----------------------------------------------------------------------------------------------------------------------
+
+MERGE Statement: The MERGE statement allows you to perform insert, update, or delete operations based on conditions in a single statement.
+Example:
+
+MERGE INTO Employees AS target
+USING (SELECT 'John', 'Doe', 'Sales Representative', 5000 AS SalaryRate) AS source (FirstName, LastName, Title, SalaryRate)
+ON (target.LastName = source.LastName AND target.FirstName = source.FirstName)
+WHEN MATCHED THEN
+  UPDATE SET target.Title = source.Title, target.SalaryRate = source.SalaryRate
+WHEN NOT MATCHED THEN
+  INSERT (FirstName, LastName, Title, SalaryRate)
+  VALUES (source.FirstName, source.LastName, source.Title, source.SalaryRate);
+
+
+MERGE INTO TargetTable AS target
+USING SourceTable AS source
+ON target.ID = source.ID
+WHEN MATCHED THEN
+    UPDATE SET target.Name = source.Name
+WHEN NOT MATCHED THEN
+    INSERT (ID, Name) VALUES (source.ID, source.Name)
+WHEN NOT MATCHED BY SOURCE THEN
+    DELETE;
+    -- Example of using MERGE statement
+    MERGE INTO Employees AS target
+    USING (SELECT EmployeeID, FirstName, LastName FROM Employees WHERE City = 'London') AS source
+
+
+Q25.How can you implement referential integrity constraints in a database?
+-----------------------------------------------------------------------------------------------------------------------
+
+Referential Integrity Constraints: Referential integrity constraints ensure that relationships between tables are maintained by enforcing rules on foreign key values. You can define referential integrity constraints using FOREIGN KEY constraints and cascading update/delete actions.
+Example:
+
+CREATE TABLE Orders (
+  OrderID INT PRIMARY KEY,
+  CustomerID NCHAR(5) FOREIGN KEY REFERENCES Customers(CustomerID),
+  OrderDate DATETIME
+);
+
+
+Q26. Explain the concept of triggers and provide an example of when they might be useful.
+-----------------------------------------------------------------------------------------------------------------------
+CREATE TRIGGER tr_EmployeeSalaryCheck
+ON Employees
+AFTER INSERT, UPDATE
+AS
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM inserted i
+    WHERE i.SalaryRate < 0
+  )
+  BEGIN
+    RAISERROR ('Salary cannot be negative', 16, 1);
+    ROLLBACK TRANSACTION;
+  END
+END;
+
+
+
+Q27. Explain the importance of database monitoring and the tools available in SQL Server for this purpose.
+-----------------------------------------------------------------------------------------------------------------------
+Database monitoring is crucial for maintaining optimal performance, identifying potential issues,
+and ensuring the availability of your database systems. SQL Server provides various tools and utilities for monitoring, such as:
+
+Performance Monitor: Allows you to monitor various performance counters related to CPU, memory, disk usage, and database-specific metrics.
+
+SQL Server Profiler: Captures and analyzes SQL Server events, including queries, stored procedures, and errors.
+
+Dynamic Management Views (DMVs): Provide a wealth of information about the current state of SQL Server, including sessions, locks, queries, and more.
+
+Extended Events: A highly configurable and low-overhead event monitoring system for capturing and analyzing SQL Server events.
+
+
+Q28. How can you optimize SQL queries for better performance?
+-----------------------------------------------------------------------------------------------------------------------
+Optimizing SQL Queries: You can optimize SQL queries by following best practices such as:
+
+Using appropriate indexes to speed up data retrieval.
+Avoiding SELECT * and selecting only the necessary columns.
+
+Using WHERE clauses to filter data as early as possible.
+
+Using JOINs instead of subqueries when possible.
+Using UNION ALL instead of UNION when duplicates are not a concern.
+Avoiding unnecessary calculations in the WHERE clause.
+
+Using EXISTS instead of IN for subqueries.
+
+Q29. What is the purpose of the SQL Server Agent, and how can it be used for scheduling tasks?
+-----------------------------------------------------------------------------------------------------------------------
+The SQL Server Agent is a component of SQL Server that allows you to automate and schedule tasks, 
+such as running jobs, executing stored procedures, and performing backups. You can create jobs in SQL Server Agent and schedule them to run at specific times or intervals.
+
+-- Example of creating a SQL Server Agent job
+USE msdb;
+EXEC dbo.sp_add_job
+  @job_name = N'BackupDatabase',
+  @enabled = 1,
+  @description = N'Backup the database every night at midnight',
+  @start_step_id = 1,
+  @notify_level_email = 2,
+  @notify_email_operator_name = N'Admin',
+  @delete_level = 0;
+
+  EXEC dbo.sp_add_jobstep
+  @job_name = N'BackupDatabase',
+  @step_name = N'BackupStep',
+  @subsystem = N'TSQL',
+  @command = N'BACKUP DATABASE [YourDatabase] TO DISK = ''C:\Backups\YourDatabase.bak'' WITH NOFORMAT, NOINIT, SKIP, NOREWIND, NOUNLOAD, STATS = 10',
+  @retry_attempts = 0,
+  @retry_interval = 0,
+  @output_file_name = N'C:\Backups\YourDatabase.log',
+  @on_success_action = 1,
+  @on_fail_action = 2;
+  EXEC dbo.sp_add_jobschedule
+  @job_name = N'BackupDatabase',
+
+  @name = N'DailyBackup',
+  @freq_type = 4,
+  @freq_interval = 1,
+  @freq_subday_type = 1,
+  @freq_subday_interval = 0,
+  @active_start_time = 0,
+  @active_start_date = 20230101,
+  @active_end_time = 235959,
+  @active_end_date = 99991231,
+  @schedule_uid = NEWID();
+
+
+  
+Q30. How can you identify and resolve performance bottlenecks in your database?
+-----------------------------------------------------------------------------------------------------------------------
+To identify and resolve performance bottlenecks, you can follow these steps:
+Monitor and Collect Baseline Data: Use the monitoring tools mentioned in above question to capture relevant performance metrics during normal operations.
+Analyze Performance Data: Examine the collected data to identify areas of concern, such as high CPU or memory usage, disk bottlenecks, or long-running queries.
+Use Query Execution Plans: Analyze the execution plans of problematic queries to understand how they are being executed and identify potential optimization opportunities.
+Tune Indexes and Statistics: Ensure that appropriate indexes are in place, and update statistics regularly to improve query performance.
+Optimize Queries: Rewrite inefficient queries, avoid cursors, and consider using set-based operations or window functions where appropriate.
+Implement Caching Strategies: Consider caching frequently accessed data or query results to reduce database load.
+
+
+Q31. How can you implement data integrity in SQL Server?
+-----------------------------------------------------------------------------------------------------------------------
+Data Integrity in SQL Server: Data integrity ensures the accuracy and consistency of data in a database. You can implement data integrity using constraints, triggers, and transactions.
+Constraints: Use primary keys, foreign keys, unique constraints, and check constraints to enforce data integrity rules at the database level.
+Triggers: Use triggers to enforce complex business rules and data validation logic.
+Transactions: Use transactions to ensure that a series of operations are completed successfully or rolled back in case of an error.
+Example of creating a primary key constraint:
+CREATE TABLE Employees (    
+  EmployeeID INT PRIMARY KEY,
+  FirstName NVARCHAR(50),
+  LastName NVARCHAR(50),
+  HireDate DATETIME
+  );
+  -- Example of creating a foreign key constraint
+  CREATE TABLE Orders (
+    OrderID INT PRIMARY KEY,
+    CustomerID INT FOREIGN KEY REFERENCES Employees(EmployeeID),
+    OrderDate DATETIME
+  );
+
+
+
+Q32. How can you implement data validation in SQL Server?
+-----------------------------------------------------------------------------------------------------------------------
+Data Validation in SQL Server: Data validation ensures that the data entered into a database meets specific criteria. You can implement data validation using constraints, triggers, and stored procedures.
+Constraints: Use check constraints to enforce specific rules on data values.
+Example:
+CREATE TABLE Employees (
+  EmployeeID INT PRIMARY KEY,
+  FirstName NVARCHAR(50),
+  LastName NVARCHAR(50),
+  Salary DECIMAL(10, 2) CHECK (Salary > 0)
+);
+-- Example of using triggers for data validation
+CREATE TRIGGER trgSalaryValidation
+ON Employees
+AFTER INSERT, UPDATE
+AS
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM inserted i
+    WHERE i.Salary < 0
+  )
+  BEGIN
+    RAISERROR ('Salary cannot be negative', 16, 1);
+    ROLLBACK TRANSACTION;
+  END
+END;
+-- Example of using stored procedures for data validation
+CREATE PROCEDURE InsertEmployee
+@FirstName NVARCHAR(50),
+@LastName NVARCHAR(50),
+@Salary DECIMAL(10, 2)
+AS
+BEGIN
+  IF @Salary <= 0
+  BEGIN
+    RAISERROR ('Salary must be greater than zero', 16, 1);
+    RETURN;
+  END
+  INSERT INTO Employees (FirstName, LastName, Salary)
+  VALUES (@FirstName, @LastName, @Salary);
+END;
+
+
+Q33.What is SQL Server Profiler?
+-----------------------------------------------------------------------------------------------------------------------
+
+👉 SQL Server Profiler is a tool that helps you watch what's happening inside SQL Server in real-time — like a CCTV camera for your database.
+
+It captures everything going on — like:
+
+Queries being run
+
+Stored procedures being called
+
+Errors and exceptions
+
+Logins, logouts
+
+Execution times
+
+Deadlocks
+
+🧠 Easy Analogy: Flight Black Box Recorder
+Imagine your SQL Server is like an airplane, and Profiler is the black box — recording every little event that happens. 
+If something crashes (like a slow query or an error), you can replay and find out what went wrong.
+
+🎯 Why is it Useful?
+Troubleshooting: Find slow queries, errors, deadlocks.
+
+Performance tuning: See which queries take time.
+
+Debugging: Watch stored procedures and SQL scripts in action.
+
+Auditing: See who’s doing what on the server.
+
+🛠️ How to Use It (In Simple Steps)
+Open SQL Server Profiler
+
+From SSMS: Tools > SQL Server Profiler
+
+Connect to Your SQL Server
+
+Start a New Trace
+
+Click on File > New Trace
+
+Choose events like SQL:BatchCompleted, RPC:Completed, etc.
+
+Run It
+
+Profiler starts capturing all SQL activity in real time.
+
+Watch Live or Save
+
+See what's happening, filter results, or save to a file/table.
+
+How to Explain in Interview:
+"SQL Server Profiler is a powerful monitoring tool that lets me trace and record SQL Server events in real-time. 
+I use it to identify slow queries, troubleshoot stored procedures, find errors, and optimize performance. It’s like a live debugger or a black box that helps you see what’s really going on behind the scenes in SQL Server."
+
+Bonus Tips to Remember
+Feature	Easy Way to Remember
+Real-time watch	Like CCTV for SQL
+Query tracing	Shows every query
+Debugging tool	Like live step-by-step watch
+Can save logs	Replay and analyze later
+Filters	Only capture what you care about
+
+Q33.Describe the concept of query execution plans and how to analyze them for optimization?
+-----------------------------------------------------------------------------------------------------------------------
+Query Execution Plans: A query execution plan is a detailed roadmap that SQL Server uses to execute a query. It shows how SQL Server retrieves data, including the order of operations, the indexes used, and the estimated costs.
+You can analyze execution plans to identify performance bottlenecks and optimize queries.
+
+-- Get the estimated execution plan for a query
+SET SHOWPLAN_TEXT ON;
+GO
+
+SELECT c.CustomerID, c.CompanyName, COUNT(o.OrderID) AS OrderCount
+FROM Customers c
+LEFT JOIN Orders o ON c.CustomerID = o.CustomerID
+GROUP BY c.CustomerID, c.CompanyName;
+
+SET SHOWPLAN_TEXT OFF;
+
+GO
+Example of viewing an execution plan:
+SET SHOWPLAN_ALL ON;
+SELECT * FROM Employees WHERE LastName = 'Smith';
+    
+    SET SHOWPLAN_ALL OFF;
+    -- Example of using the Actual Execution Plan
+    SET STATISTICS PROFILE ON;
+    SELECT * FROM Employees WHERE LastName = 'Smith';
+    SET STATISTICS PROFILE OFF;
+
+Q34.How to convert rows to columns in SQL Server?
+----------------------------------------------------------------------------------------------------------------------
+To convert rows to columns in SQL Server, you can use the PIVOT operator. The PIVOT operator allows you to transform data from rows into columns based on specified criteria.
+Example:
+SELECT *
+FROM (
+  SELECT EmployeeID, Year, Salary
+  FROM EmployeeSalaries
+  ) AS SourceTable
+  PIVOT (
+  SUM(Salary)
+    FOR Year IN ([2020], [2021], [2022])
+  ) AS PivotTable;
+
+
+Q35. How to split a comma-separated value to columns in SQL Server?
+----------------------------------------------------------------------------------------------------------------------
+To split a comma-separated value into columns in SQL Server, you can use the STRING_SPLIT function or create a custom function to parse the string.
+Example using STRING_SPLIT:
+SELECT value
+FROM STRING_SPLIT('A,B,C,D', ',');
+-- Example using a custom function
+CREATE FUNCTION SplitString
+  (@String NVARCHAR(MAX), @Delimiter CHAR(1))
+  RETURNS @OutputTable TABLE (Value NVARCHAR(MAX))
+  AS
+  BEGIN
+  DECLARE @Index INT;
+    SET @Index = CHARINDEX(@Delimiter, @String);
+    WHILE @Index > 0
+    BEGIN
+      INSERT INTO @OutputTable (Value)
+      VALUES (LEFT(@String, @Index - 1));
+      SET @String = RIGHT(@String, LEN(@String) - @Index);
+      SET @Index = CHARINDEX(@Delimiter, @String);
+    END
+    INSERT INTO @OutputTable (Value)
+    VALUES (@String);
+    RETURN;
+  END;
+
+Q36.What is a Cursor in SQL Server? 
+----------------------------------------------------------------------------------------------------------------------
+ A cursor is like a loop for your SQL table.
+
+Normally, SQL works with sets (multiple rows at once).
+
+But sometimes, you want to process rows one-by-one — like going row by row in Excel.
+
+That’s when you use a cursor.
+
+🧠 Easy Analogy: Reading a Book Line by Line
+Imagine your table is a book 📖.
+
+If you want to read the whole book at once, that’s normal SQL (like SELECT *).
+
+But if you want to read one line at a time, maybe do something with each line (highlight, take notes), then you use a cursor.
+
+🔧 When to Use a Cursor?
+Use a cursor when:
+
+You need to do something row by row (like complex logic or calling a stored procedure per row).
+
+Set-based operations won’t work easily.
+
+But ⚠️ be careful — cursors are slow, and SQL is designed for set-based operations, so avoid them if you can.
+
+🔁 Cursor Flow (Just Remember This Order)
+DECLARE the cursor
+
+OPEN the cursor
+
+FETCH rows from it (looping through)
+
+PROCESS each row (your logic)
+
+CLOSE the cursor
+DEALLOCATE the cursor (clean up)
+-- Example of using a cursor
+
+    DECLARE @ProductName NVARCHAR(100);
+    
+    DECLARE product_cursor CURSOR FOR
+    SELECT ProductName FROM Products;
+    
+    OPEN product_cursor;
+    FETCH NEXT FROM product_cursor INTO @ProductName;
+    
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        PRINT @ProductName;
+        FETCH NEXT FROM product_cursor INTO @ProductName;
+    END;
+    
+    CLOSE product_cursor;
+    DEALLOCATE product_cursor;
+
+Q37.What is the difference between Count(*) and Count(1)?
+----------------------------------------------------------------------------------------------------------------------
+Both COUNT(*) and COUNT(1) return the total number of rows in a table, including rows with NULL values. There's no difference in the result, and in modern SQL Server, 
+there's no performance difference either — the optimizer handles both efficiently. COUNT(*) is more readable and is generally preferred.
+
+COUNT(*) = All rows (best for total count)
+
+COUNT(1) = Same as COUNT(*)
+
+COUNT(column) = Only non-NULLs in that column
+
+
+Q38.How to escape a single quote in SQL Server?
+----------------------------------------------------------------------------------------------------------------------
+To escape a single quote in SQL Server, you can use two single quotes. For example, to insert the string O'Reilly, you would write it as O''Reilly.
+Example:
+INSERT INTO Authors (AuthorName)
+VALUES ('O''Reilly');
+--OR
+SELECT 'It''s a beautiful day';
+
+Q39. How to use the COALESCE function in SQL Server?
+----------------------------------------------------------------------------------------------------------------------
+The COALESCE function returns the first non-null value from a list of expressions. It is often used to handle NULL values in queries.
+Example:
+SELECT COALESCE(FirstName, LastName, 'Unknown') AS FullName
+FROM Employees;
+
+
+Q40. How to use the CASE statement in SQL Server?  
+----------------------------------------------------------------------------------------------------------------------
+The CASE statement allows you to perform conditional logic in SQL queries. It can be used in SELECT, UPDATE, and WHERE clauses.
+Example:
+SELECT EmployeeID, FirstName, LastName,
+  CASE
+    WHEN Salary > 50000 THEN 'High Salary'
+    WHEN Salary BETWEEN 30000 AND 50000 THEN 'Medium Salary'
+    ELSE 'Low Salary'
+  END AS SalaryCategory
+  FROM Employees;
+
+Q40. What is the difference between NOT IN vs NOT EXISTS?  
+----------------------------------------------------------------------------------------------------------------------
+NOT IN vs. NOT EXISTS: NOT IN checks if a value is not present in a list, while NOT EXISTS checks if a subquery returns no rows.
+
+Example of NOT IN:
+SELECT EmployeeID, FirstName, LastName
+FROM Employees
+WHERE EmployeeID NOT IN (SELECT EmployeeID FROM Orders);
+Example of NOT EXISTS:
+SELECT EmployeeID, FirstName, LastName
+FROM Employees e
+WHERE NOT EXISTS (SELECT 1 FROM Orders o WHERE o.EmployeeID = e.EmployeeID);
+
+Q41. How to use the RANK() function in SQL Server?
+----------------------------------------------------------------------------------------------------------------------
+The RANK() function assigns a unique rank to each row within a partition of a result set. It is often used for ranking data based on specific criteria.
+Example:
+SELECT EmployeeID, FirstName, LastName, Salary,
+  RANK() OVER (ORDER BY Salary DESC) AS SalaryRank
+  FROM Employees;
+
+
+Q42. How to use the ROW_NUMBER() function in SQL Server?
+----------------------------------------------------------------------------------------------------------------------
+The ROW_NUMBER() function assigns a unique sequential integer to rows within a partition of a result set. It is often used for pagination.
+Example:
+SELECT EmployeeID, FirstName, LastName, Salary,
+  ROW_NUMBER() OVER (ORDER BY Salary DESC) AS RowNum
+  FROM Employees;
+
+
+Q43. How to return only the Date from a DateTime datatype in SQL Server?
+----------------------------------------------------------------------------------------------------------------------
+To return only the date from a DateTime datatype, you can use the CAST or CONVERT functions.
+Example:
+SELECT CAST(GETDATE() AS DATE) AS CurrentDate;
+--OR
+SELECT CONVERT(DATE, GETDATE()) AS CurrentDate;
+---More Examples 
+SELECT CAST(123 AS VARCHAR)
+
+SELECT CONVERT(VARCHAR, GETDATE(), 103)
+CAST and CONVERT both change data types. CAST is more standard and easier to read, while CONVERT is specific to SQL Server and supports formatting styles, especially useful for dates.
+
+SELECT FORMAT(GETDATE(), 'dd-MM-yyyy')
+Gives output like 13-04-2025
+
+Supports custom formats (like in Excel or C#)
+
+Slower than CONVERT but more flexible
+SELECT DATEADD(DAY, 5, GETDATE())     -- Add 5 days
+SELECT DATEADD(MONTH, 1, GETDATE())   -- Add 1 month
+SELECT DATEADD(YEAR, -2, GETDATE())   -- Subtract 2 years
+
+
+Q44. How to get column values whose value starts with 'a' letter?
+----------------------------------------------------------------------------------------------------------------------
+SELECT column_name
+FROM table_name
+WHERE column_name LIKE 'a%';
+
+
+Q45. What is the use of CTE in SQL Server?
+----------------------------------------------------------------------------------------------------------------------
+Common Table Expressions (CTEs): CTEs are temporary result sets that can be referenced within a SELECT, INSERT, UPDATE, or DELETE statement.
+They are useful for simplifying complex queries and improving readability.
+Example:
+WITH EmployeeCTE AS (
+  SELECT EmployeeID, FirstName, LastName
+  FROM Employees
+  WHERE Salary > 50000
+  )
+  SELECT *
+  FROM EmployeeCTE
+  WHERE LastName LIKE 'S%';
+
+
+Q46. How to use the TRY...CATCH block in SQL Server?
+----------------------------------------------------------------------------------------------------------------------
+TRY...CATCH blocks are used for error handling in SQL Server. You can use them to catch and handle errors that occur during the execution of a T-SQL statement.
+Example:
+BEGIN TRY
+  -- Code that may cause an error
+  INSERT INTO Employees (FirstName, LastName)
+  VALUES ('John', 'Doe');
+END TRY
+BEGIN CATCH
+  -- Error handling code
+  DECLARE @ErrorMessage NVARCHAR(4000);
+  SET @ErrorMessage = ERROR_MESSAGE();
+  PRINT 'Error occurred: ' + @ErrorMessage;
+END CATCH;
+
+
+Q47. Explain the Magic Tables in SQL Server.?
+----------------------------------------------------------------------------------------------------------------------
+Magic Tables: Magic tables are special tables created by SQL Server to hold the inserted and deleted rows during the execution of triggers. They are not physically stored in the database and are only accessible within the context of a trigger.
+Example:
+CREATE TRIGGER trgAfterInsert
+ON Employees
+AFTER INSERT
+AS
+BEGIN
+  SELECT * FROM inserted; -- Accessing the inserted magic table
+  SELECT * FROM deleted; -- Accessing the deleted magic table
+  END;
+
+
+Q48. How to use the PIVOT operator in SQL Server?
+----------------------------------------------------------------------------------------------------------------------
+The PIVOT operator is used to transform rows into columns in SQL Server. It allows you to rotate data from a table into a more readable format.
+Example:
+SELECT *
+FROM (
+  SELECT EmployeeID, Year, Salary
+  FROM EmployeeSalaries
+  ) AS SourceTable
+  PIVOT (
+  SUM(Salary)
+    FOR Year IN ([2020], [2021], [2022])
+  ) AS PivotTable;
+
+
+Q49. How to use the UNPIVOT operator in SQL Server? 
+----------------------------------------------------------------------------------------------------------------------
+The UNPIVOT operator is used to transform columns into rows in SQL Server. It allows you to convert a wide format table into a long format.
+
+Example:
+SELECT EmployeeID, Year, Salary
+FROM (
+  SELECT EmployeeID, [2020], [2021], [2022]
+  FROM EmployeeSalaries
+  ) AS SourceTable
+  UNPIVOT (
+  Salary FOR Year IN ([2020], [2021], [2022])
+  ) AS UnpivotedTable;
+      
+Q50. How to use the CROSS APPLY operator in SQL Server?
+----------------------------------------------------------------------------------------------------------------------
+The CROSS APPLY operator is used to join a table with a table-valued function. It allows you to apply a function to each row of the outer table.
+Example:
+SELECT e.EmployeeID, e.FirstName, e.LastName, d.DepartmentName
+FROM Employees e
+CROSS APPLY (
+  SELECT DepartmentName
+  FROM Departments d
+  WHERE d.EmployeeID = e.EmployeeID
+) AS d;
+
+
+Q51. What is the OPTION clause in SQL Server
+----------------------------------------------------------------------------------------------------------------------
+The OPTION clause is used to specify query hints and options for query optimization in SQL Server. 
+It can be used to control the behavior of the query optimizer and improve performance.
+Example:
+SELECT EmployeeID, FirstName, LastName
+FROM Employees
+WHERE Salary > 50000
+OPTION (RECOMPILE);
+
+
+---More
+The OPTION clause in SQL Server is used to specify various query hints that can influence the behavior of the query optimizer when executing a SQL statement. These hints can be used to control how the query optimizer generates the execution plan, which can sometimes improve query performance or enforce specific query processing behaviors.
+
+Common Query Hints with OPTION Clause
+FORCE ORDER:
+
+Forces the optimizer to join tables in the order they appear in the query.
+
+LOOP JOIN | HASH JOIN | MERGE JOIN:
+
+Specifies the join algorithm to be used.
+
+OPTIMIZE FOR:
+
+Provides a way to optimize the query for a specific value of a parameter.
+
+RECOMPILE:
+
+Forces recompilation of the query each time it is executed, ensuring that the most current statistics are used.
+
+MAXDOP:
+
+Limits the number of processors used in parallel plan execution.
+
+FAST n:
+
+Optimizes for fast retrieval of the first n rows.
+
+Q52. Explain the use of Coalesce function in SQL Server
+----------------------------------------------------------------------------------------------------------------------
+The COALESCE function in SQL Server is used to return the first non-null value from a list of expressions. It is often used to handle NULL values in queries and can be useful for providing default values.
+Example:
+SELECT COALESCE(FirstName, LastName, 'Unknown') AS FullName
+FROM Employees;
+-- Example of using COALESCE with multiple columns
+SELECT COALESCE(FirstName, LastName, 'No Name') AS FullName
+FROM Employees;
+
+
+Q53. How to use the STRING_AGG function in SQL Server?
+----------------------------------------------------------------------------------------------------------------------
+The STRING_AGG function is used to concatenate values from multiple rows into a single string, separated by a specified delimiter. It is available in SQL Server 2017 and later versions.
+Example:
+SELECT STRING_AGG(FirstName, ', ') AS EmployeeNames
+FROM Employees;
+
+-- Example of using STRING_AGG with a GROUP BY clause
+SELECT DepartmentID, STRING_AGG(FirstName, ', ') AS EmployeeNames
+FROM Employees
+GROUP BY DepartmentID;
+
+--more example 
+    SELECT STRING_AGG(Name, ', ') AS EmployeeNames
+    FROM Employees
+    --> output: John, Sara, Emily
+    
+
+
+
+Q54. Differentiate Functions and Stored Procedures in SQL Server.
+----------------------------------------------------------------------------------------------------------------------
+Functions vs. Stored Procedures: Functions return a single value and can be used in SELECT statements, while stored procedures can perform complex operations and do not return values directly.
+Functions:
+- Can be used in SELECT, WHERE, and JOIN clauses.
+    - Must return a value.
+    - Cannot modify database state (no INSERT, UPDATE, DELETE).
+    - Cannot use transactions.
+      --> Example of a function
+        CREATE FUNCTION GetFullName
+          (@FirstName NVARCHAR(50), @LastName NVARCHAR(50))
+          RETURNS NVARCHAR(100)
+          AS
+          BEGIN
+            RETURN @FirstName + ' ' + @LastName;
+          END;
+Stored Procedures:
+- Cannot be used in SELECT, WHERE, and JOIN clauses.
+    - Can perform complex operations and return multiple result sets.
+    - Can modify database state (INSERT, UPDATE, DELETE).
+    - Can use transactions.
+      --> Example of a stored procedure
+      CREATE PROCEDURE GetEmployeeCount
+        AS
+        BEGIN
+          SELECT COUNT(*) FROM Employees;
+        END;
+        -- Executing the stored procedure
+        EXEC GetEmployeeCount;
+
+
+Q55. How to use the JSON functions in SQL Server?
+----------------------------------------------------------------------------------------------------------------------
+SQL Server provides built-in functions for working with JSON data. You can use these functions to parse, query, and manipulate JSON data stored in SQL Server.
+Example:
+SELECT JSON_VALUE('{"name": "John", "age": 30}', '$.name') AS Name;
+-- Example of using JSON_QUERY to extract an array
+SELECT JSON_QUERY('{"employees": [{"name": "John"}, {"name": "Jane"}]}', '$.employees') AS Employees;
+-- Example of using OPENJSON to parse JSON data into a table
+SELECT *
+FROM OPENJSON('{"employees": [{"name": "John"}, {"name": "Jane"}]}')
+WITH (name NVARCHAR(50) '$.name');
+
+
+--More example
+    CREATE PROCEDURE UpsertEmployeesFromJSON
+        @EmployeeJSON NVARCHAR(MAX)
+    AS
+    BEGIN
+        SET NOCOUNT ON;
+    
+        DECLARE @Results TABLE (EmployeeID INT);
+    
+        -- Parse the JSON
+        INSERT INTO Employees (Name, Age, Department)
+        OUTPUT INSERTED.EmployeeID INTO @Results(EmployeeID)
+        SELECT Name, Age, Department
+        FROM OPENJSON(@EmployeeJSON)
+        WITH (
+            EmployeeID INT,
+            Name NVARCHAR(100),
+            Age INT,
+            Department NVARCHAR(50)
+        ) AS parsedData
+        WHERE parsedData.EmployeeID = 0;
+    
+        -- Update existing records
+        UPDATE E
+        SET E.Name = J.Name,
+            E.Age = J.Age,
+            E.Department = J.Department
+        OUTPUT INSERTED.EmployeeID INTO @Results(EmployeeID)
+        FROM Employees E
+        INNER JOIN OPENJSON(@EmployeeJSON)
+        WITH (
+            EmployeeID INT,
+            Name NVARCHAR(100),
+            Age INT,
+            Department NVARCHAR(50)
+        ) AS J ON E.EmployeeID = J.EmployeeID
+        WHERE J.EmployeeID <> 0;
+    
+        -- Return result as JSON array
+        SELECT EmployeeID
+        FROM @Results
+        FOR JSON AUTO;
+    END;
+
+Q56. How many Joins Are there in a SQL Server?
+----------------------------------------------------------------------------------------------------------------------
+There are four main types of joins in SQL Server:
+1. INNER JOIN: Returns only the rows that have matching values in both tables.
+2. LEFT JOIN (or LEFT OUTER JOIN): Returns all rows from the left table and the matched rows from the right table. If there is no match, NULL values are returned for columns from the right table.
+3. RIGHT JOIN (or RIGHT OUTER JOIN): Returns all rows from the right table and the matched rows from the left table. If there is no match, NULL values are returned for columns from the left table.
+4. FULL JOIN (or FULL OUTER JOIN): Returns all rows when there is a match in either left or right table records. If there is no match, NULL values are returned for columns from the table without a match.
+5. CROSS JOIN: Returns the Cartesian product of both tables, meaning every row from the first table is combined with every row from the second table.
+
+
+
+
+  Q30. How can you implement data encryption in SQL Server?
+  -----------------------------------------------------------------------------------------------------------------------
+  Data Encryption in SQL Server: SQL Server provides various encryption methods,
+  including Transparent Data Encryption (TDE), column-level encryption, and Always Encrypted. You can use these methods to protect sensitive data at rest and in transit.
+  Example of enabling TDE:
+  USE master;
+  CREATE DATABASE YourDatabase
+  SET ENCRYPTION ON;
+  CREATE DATABASE ENCRYPTION KEY WITH ALGORITHM = AES_256 ENCRYPTION BY PASSWORD = 'YourPassword';
+  ALTER DATABASE YourDatabase
+  SET ENCRYPTION ON;
+  -- Example of column-level encryption
+  CREATE TABLE Employees (
+    EmployeeID INT PRIMARY KEY,
+    FirstName NVARCHAR(50),
+    LastName NVARCHAR(50),
+    SSN VARBINARY(128) ENCRYPTED WITH (ENCRYPTION_TYPE = DETERMINISTIC, ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256', ENCRYPTION_KEY_NAME = 'YourColumnEncryptionKey')
+  );
+  -- Example of Always Encrypted
+  CREATE COLUMN ENCRYPTION KEY YourColumnEncryptionKey
+
+Q31. How can you implement data archiving in SQL Server?
+-----------------------------------------------------------------------------------------------------------------------
+Data Archiving in SQL Server: Data archiving involves moving older or less frequently accessed data to a separate storage location to improve performance and manageability. 
+You can implement data archiving using partitioning, creating separate archive tables, or using SQL Server's built-in features like Data Compression.
+
+Example of creating an archive table:
+CREATE TABLE Employees_Archive (
+  EmployeeID INT PRIMARY KEY,
+  FirstName NVARCHAR(50),
+  LastName NVARCHAR(50),
+  HireDate DATETIME
+);
+-- Example of moving data to the archive table
+INSERT INTO Employees_Archive (EmployeeID, FirstName, LastName, HireDate)
+SELECT EmployeeID, FirstName, LastName, HireDate
+FROM Employees
+WHERE HireDate < DATEADD(YEAR, -5, GETDATE());
+-- Example of partitioning
+CREATE PARTITION FUNCTION EmployeePartitionFunction (DATETIME)
+AS RANGE LEFT FOR VALUES ('2020-01-01', '2021-01-01', '2022-01-01');
+CREATE PARTITION SCHEME EmployeePartitionScheme
+AS PARTITION EmployeePartitionFunction TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY]);
+CREATE TABLE Employees (
+  EmployeeID INT PRIMARY KEY,
+  FirstName NVARCHAR(50),
+  LastName NVARCHAR(50),
+  HireDate DATETIME
+) ON EmployeePartitionScheme (HireDate);
+-- Example of using Data Compression
+ALTER TABLE Employees REBUILD WITH (DATA_COMPRESSION = PAGE);
+-- Example of using SQL Server's built-in features
+CREATE TABLE Employees (
+  EmployeeID INT PRIMARY KEY,
+  FirstName NVARCHAR(50),
+  LastName NVARCHAR(50),
+  HireDate DATETIME
+) WITH (DATA_COMPRESSION = PAGE);
+
+
+Q32. How can you implement data replication in SQL Server?
+-----------------------------------------------------------------------------------------------------------------------
+Data Replication in SQL Server: Data replication involves copying and distributing data from one database to another. SQL Server supports various replication types, including snapshot replication, transactional replication, and merge replication. You can use these methods to synchronize data across multiple databases or servers.
+Example of setting up transactional replication:
+-- Example of setting up transactional replication
+USE master;
+EXEC sp_addserver 'PublisherServer', 'local';
+EXEC sp_addserver 'SubscriberServer', 'local';
+EXEC sp_addserver 'DistributorServer', 'local';
+EXEC sp_adddistributor @distributor = 'DistributorServer', @password = 'YourPassword';
+EXEC sp_addpublication @publication = 'YourPublication', @status = 'active', @sync_method = 'native', @retention = 0, @allow_push = 'true', @allow_pull = 'true', @allow_anonymous = 'false';
+EXEC sp_addarticle @publication = 'YourPublication', @article = 'YourArticle', @source_object = 'YourTable', @type = 'logbased';
+EXEC sp_addsubscription @publication = 'YourPublication', @subscriber = 'SubscriberServer', @destination_db = 'YourDatabase', @sync_type = 'native', @article = 'YourArticle';
+EXEC sp_addpushsubscription_agent @publication = 'YourPublication', @subscriber = 'SubscriberServer', @destination_db = 'YourDatabase', @subscriber_type = '2', @sync_type = 'native';
+
+Q33. How can you implement data partitioning in SQL Server?
+-----------------------------------------------------------------------------------------------------------------------
+Data Partitioning in SQL Server: Data partitioning involves dividing a large table into smaller, more manageable pieces called partitions. This can improve query performance and manageability. You can implement data partitioning using partitioned tables and partitioned views.
+Example of creating a partitioned table:
+CREATE PARTITION FUNCTION EmployeePartitionFunction (DATETIME)
+AS RANGE LEFT FOR VALUES ('2020-01-01', '2021-01-01', '2022-01-01');
+CREATE PARTITION SCHEME EmployeePartitionScheme
+AS PARTITION EmployeePartitionFunction TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY]);
+CREATE TABLE Employees (
+  EmployeeID INT PRIMARY KEY,
+  FirstName NVARCHAR(50),
+  LastName NVARCHAR(50),
+  HireDate DATETIME
+) ON EmployeePartitionScheme (HireDate);
+-- Example of creating a partitioned view
+CREATE VIEW Employees_View
+AS
+SELECT * FROM Employees_2020
+UNION ALL
+SELECT * FROM Employees_2021
+UNION ALL
+SELECT * FROM Employees_2022;
+-- Example of using partitioned tables
+CREATE TABLE Employees_2020 (
+  EmployeeID INT PRIMARY KEY,
+  FirstName NVARCHAR(50),
+  LastName NVARCHAR(50),
+  HireDate DATETIME
+) ON EmployeePartitionScheme (HireDate);
+
+Q34. How can you implement data compression in SQL Server?
+-----------------------------------------------------------------------------------------------------------------------
+Data Compression in SQL Server: Data compression reduces the size of data stored in a table or index, which can improve performance and reduce storage costs. SQL Server supports row-level and page-level compression.
+Example of enabling data compression:
+ALTER TABLE Employees REBUILD WITH (DATA_COMPRESSION = ROW);
+ALTER INDEX ALL ON Employees REBUILD WITH (DATA_COMPRESSION = PAGE);
+-- Example of using data compression on a table
+CREATE TABLE Employees (
+  EmployeeID INT PRIMARY KEY,
+  FirstName NVARCHAR(50),
+  LastName NVARCHAR(50),
+  HireDate DATETIME
+) WITH (DATA_COMPRESSION = PAGE);
+-- Example of using data compression on an index
+CREATE INDEX IX_Employees_LastName
+ON Employees (LastName)
+WITH (DATA_COMPRESSION = PAGE);
+-- Example of using data compression on a partitioned table
+CREATE PARTITION FUNCTION EmployeePartitionFunction (DATETIME)
+AS RANGE LEFT FOR VALUES ('2020-01-01', '2021-01-01', '2022-01-01');
+CREATE PARTITION SCHEME EmployeePartitionScheme
+AS PARTITION EmployeePartitionFunction TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY]);
+CREATE TABLE Employees (
+  EmployeeID INT PRIMARY KEY,
+  FirstName NVARCHAR(50),
+  LastName NVARCHAR(50),
+  HireDate DATETIME
+) ON EmployeePartitionScheme (HireDate) WITH (DATA_COMPRESSION = PAGE);
+
+-- Example of using data compression on a partitioned index
+CREATE INDEX IX_Employees_LastName
+ON Employees (LastName)
+WITH (DATA_COMPRESSION = PAGE);
+-- Example of using data compression on a partitioned view
+CREATE VIEW Employees_View
+AS
+SELECT * FROM Employees_2020
+UNION ALL
+SELECT * FROM Employees_2021
+UNION ALL
+SELECT * FROM Employees_2022;
+-- Example of using data compression on a partitioned table
+CREATE PARTITION FUNCTION EmployeePartitionFunction (DATETIME)
+AS RANGE LEFT FOR VALUES ('2020-01-01', '2021-01-01', '2022-01-01');
+
+Q35. How can you implement data deduplication in SQL Server?
+-----------------------------------------------------------------------------------------------------------------------
+    
+    Data Deduplication in SQL Server: Data deduplication involves removing duplicate records from a table. You can implement data deduplication using various methods, such as using the ROW_NUMBER() function or creating unique constraints.
+    Example of removing duplicates using ROW_NUMBER():
+    WITH CTE AS (
+      SELECT *, ROW_NUMBER() OVER (PARTITION BY FirstName, LastName ORDER BY EmployeeID) AS RN
+      FROM Employees
+    )
+    DELETE FROM CTE WHERE RN > 1;
+    -- Example of creating a unique constraint
+    ALTER TABLE Employees
+    ADD CONSTRAINT UQ_Employees UNIQUE (FirstName, LastName);
+    -- Example of using a unique index
+    CREATE UNIQUE INDEX UQ_Employees
+    ON Employees (FirstName, LastName);
+    -- Example of using a unique constraint on a partitioned table
+    CREATE PARTITION FUNCTION EmployeePartitionFunction (DATETIME)
+    AS RANGE LEFT FOR VALUES ('2020-01-01', '2021-01-01', '2022-01-01');
+    CREATE PARTITION SCHEME EmployeePartitionScheme
+    AS PARTITION EmployeePartitionFunction TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY]);
+    CREATE TABLE Employees (
+      EmployeeID INT PRIMARY KEY,
+      FirstName NVARCHAR(50),
+      LastName NVARCHAR(50),
+      HireDate DATETIME
+    ) ON EmployeePartitionScheme (HireDate);
+Q36. How can you implement data masking in SQL Server?  
+-----------------------------------------------------------------------------------------------------------------------
+Data Masking in SQL Server: Data masking involves hiding sensitive data in a database. 
+SQL Server provides dynamic data masking to limit sensitive data exposure by masking it to non-privileged users.
+
+Example of implementing dynamic data masking:
+    
+    CREATE TABLE Employees (
+  EmployeeID INT PRIMARY KEY,
+  FirstName NVARCHAR(50) MASKED WITH (FUNCTION = 'default()'),
+  LastName NVARCHAR(50) MASKED WITH (FUNCTION = 'partial(1,"XXXXXX",0)'),
+  SSN CHAR(11) MASKED WITH (FUNCTION = 'partial(0,"XXX-XX-",4)')
+);
+-- Example of using dynamic data masking
+SELECT EmployeeID, FirstName, LastName, SSN
+FROM Employees;
+-- Example of using dynamic data masking with a partitioned table
+CREATE PARTITION FUNCTION EmployeePartitionFunction (DATETIME)
+AS RANGE LEFT FOR VALUES ('2020-01-01', '2021-01-01', '2022-01-01');
+CREATE PARTITION SCHEME EmployeePartitionScheme
+AS PARTITION EmployeePartitionFunction TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY]);
+CREATE TABLE Employees (
+  EmployeeID INT PRIMARY KEY,
+  FirstName NVARCHAR(50) MASKED WITH (FUNCTION = 'default()'),
+  LastName NVARCHAR(50) MASKED WITH (FUNCTION = 'partial(1,"XXXXXX",0)'),
+  SSN CHAR(11) MASKED WITH (FUNCTION = 'partial(0,"XXX-XX-",4)')
+) ON EmployeePartitionScheme (HireDate);
+
+Q37. How can you implement data lineage in SQL Server?
+-----------------------------------------------------------------------------------------------------------------------
+Data Lineage in SQL Server: Data lineage involves tracking the flow of data from its origin to its destination.
+You can implement data lineage using SQL Server's built-in features, such as Change Data Capture (CDC) and Change Tracking, or by creating custom logging tables.
+Example of using Change Data Capture (CDC):
+    
+    USE YourDatabase;
+    EXEC sys.sp_cdc_enable_db;
+    EXEC sys.sp_cdc_enable_table
+      @source_schema = 'dbo',
+      @source_name = 'Employees',
+      @role_name = NULL;
+      -- Example of using Change Tracking
+      USE YourDatabase;
+      EXEC sys.sp_cdc_enable_db;
+      EXEC sys.sp_cdc_enable_table
+      @source_schema = 'dbo',
+      @source_name = 'Employees',
+      @role_name = NULL;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

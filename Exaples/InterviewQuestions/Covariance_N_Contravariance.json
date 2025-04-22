@@ -1,0 +1,50 @@
+{
+  "Title": "Covariance and Contravariance in C#",
+  "Description": "Covariance and Contravariance allow flexibility when dealing with generic types, delegates, and interfaces in C#.",
+  "Concepts": {
+    "Covariance": {
+      "Definition": "You can use a more derived type (child) instead of a base type (parent).",
+      "ExampleCode": "IEnumerable<string> strings = new List<string> { \"A\", \"B\", \"C\" };\nIEnumerable<object> objects = strings; // Works because IEnumerable<T> is covariant",
+      "Explanation": "IEnumerable<T> is covariant, meaning IEnumerable<string> can be assigned to IEnumerable<object>. This is allowed because we are only reading values (out) from the collection, not modifying it.",
+      "WhereItWorks": [
+        "Generic interfaces (IEnumerable<T>, IReadOnlyList<T>)",
+        "Delegates (Func<T> but not Action<T>)"
+      ]
+    },
+    "Contravariance": {
+      "Definition": "You can use a base type (parent) instead of a derived type (child).",
+      "ExampleCode": "Action<object> objectAction = (obj) => Console.WriteLine(obj);\nAction<string> stringAction = objectAction; // Works because Action<T> is contravariant",
+      "Explanation": "Action<T> is contravariant, meaning Action<object> can be assigned to Action<string>. This works because Action only accepts (in) values, and an object can accept any string.",
+      "WhereItWorks": [
+        "Generic interfaces (IComparer<T>, IEqualityComparer<T>)",
+        "Delegates (Action<T>)"
+      ]
+    }
+  },
+  "SummaryTable": {
+    "Covariance": {
+      "Definition": "Allows a more derived type (child) to be assigned to a base type",
+      "Example": "IEnumerable<string> → IEnumerable<object>",
+      "WhereItWorks": "IEnumerable<T>, Func<T>, IReadOnlyList<T>"
+    },
+    "Contravariance": {
+      "Definition": "Allows a base type to be assigned where a derived type is expected",
+      "Example": "Action<object> → Action<string>",
+      "WhereItWorks": "IComparer<T>, Action<T>, IEqualityComparer<T>"
+    }
+  },
+  "MoreRealWorldExamples": {
+    "Covariance": {
+      "__comment__": "Covariance Example - Movie Streaming Service",
+      "Example": "Imagine you are using a movie streaming service like Netflix. The service has a collection of Movies (IEnumerable<Movie>). It also has a collection of Action Movies (IEnumerable<ActionMovie>), which is a more specific type of movie. Since Action Movies are still Movies, it makes sense that a list of Action Movies can be used as a list of Movies.",
+      "Code": "IEnumerable<ActionMovie> actionMovies = new List<ActionMovie> { new ActionMovie(), new ActionMovie() };\nIEnumerable<Movie> movies = actionMovies; // Covariance allows this",
+      "WhyItWorks": "IEnumerable<T> is covariant because we are only reading the movies. You can watch (read) movies, but you can’t add a new movie to the collection, so it’s safe."
+    },
+    "Contravariance": {
+      "__comment__": "Contravariance Example - Customer Service Calls",
+      "Example": "Imagine you have a customer service helpline. There is a general Customer Support Agent who can handle any customer (Action<Customer>). There is also a specialized Tech Support Agent who only deals with Tech Customers (Action<TechCustomer>). Since a Tech Customer is still a Customer, it makes sense that a general Customer Support Agent should be able to handle a Tech Customer too!",
+      "Code": "Action<Customer> generalSupport = (customer) => Console.WriteLine($\"Helping customer: {customer.Name}\");\nAction<TechCustomer> techSupport = generalSupport; // Contravariance allows this",
+      "WhyItWorks": "Action<T> is contravariant because we are only accepting (input) customers. A general agent can handle any customer, including specialized tech customers."
+    }
+  }
+}

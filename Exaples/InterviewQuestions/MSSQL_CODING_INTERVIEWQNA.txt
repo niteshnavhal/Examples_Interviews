@@ -1,0 +1,147 @@
+﻿SQL Interview Questions - Advanced Queries
+==========================================
+
+Q1: Count of Employees in Each Department
+------------------------------------------
+
+To count employees per department, we use a LEFT JOIN with GROUP BY:
+
+SELECT 
+    d.DepartmentName,
+    COUNT(1) AS EmployeeCount
+FROM 
+    tblEmployees e
+LEFT JOIN 
+    tblDepartment d ON d.DepartmentID = e.DepartmentID
+GROUP BY 
+    d.DepartmentName;
+
+
+Q2: Nth Highest Salary of Employees
+------------------------------------
+
+We use a CTE with DENSE_RANK to rank salaries in descending order:
+
+;WITH cte AS (
+    SELECT 
+        DENSE_RANK() OVER (ORDER BY Salary DESC) AS RANK_ROW,
+        Salary,
+        Name,
+        DepartmentID
+    FROM 
+        tblEmployees
+)
+SELECT 
+    RANK_ROW,
+    Salary,
+    Name,
+    c.DepartmentID,
+    d.DepartmentName
+FROM 
+    cte c
+JOIN 
+    tblDepartment d ON d.DepartmentID = c.DepartmentID;
+
+-- To get the Nth highest salary, add:
+-- WHERE RANK_ROW = N
+
+
+
+Q3:  Highest Salary in each department
+---------------------------------------
+
+;with cte as(
+select Dense_RANK() over (partition by tblEmployees.DepartmentID order by Salary desc) AS RANK_ROW, Salary, Name,DepartmentID from  tblEmployees 
+)
+
+select RANK_ROW ,Salary, Name,cte.DepartmentID ,d.DepartmentName  from cte
+join tblDepartment d on d.DepartmentID = cte.DepartmentID
+where RANK_ROW = 1
+
+
+Q4: Organization Hierarchy
+----------------------------------
+
+;with EmployeeHierarchy  AS (
+	select EmployeeID ,Name,DepartmentID,ManagerID from  tblEmployees  
+	WHERE EmployeeID = 5
+	
+	UNION ALL 
+	
+	select e.EmployeeID ,e.Name,e.DepartmentID,e.ManagerID  from  tblEmployees e
+	INNER JOIN EmployeeHierarchy eh  on e.ManagerID = eh.EmployeeID
+)
+SELECT EmployeeHierarchy.EmployeeID,EmployeeHierarchy.Name,reh.Name as Manager FROM EmployeeHierarchy
+left join EmployeeHierarchy reh on EmployeeHierarchy.ManagerID = reh.EmployeeID
+
+
+
+Q5: Delete Duplicate Records
+----------------------------------
+
+With CTE AS (
+  select *,RN = ROW_NUMBER() over(partition by id Order by id) from Employee1
+  )
+
+  delete from CTE where RN>1;
+
+
+Q5:  Convert Rows into Columns
+----------------------------------
+--PIVOT
+--step 1select column
+--step 2 select DATA
+--pivoting
+
+SELECT Name, DeviceType1, DeviceType2, DeviceType3
+FROM (
+    SELECT 
+        Name,
+        DeviceType,
+        'DeviceType' + CAST(ROW_NUMBER() OVER (PARTITION BY Name ORDER BY DeviceType) AS VARCHAR(50)) AS DeviceTypeNumber
+    FROM tbDevice
+) AS SourceTable
+PIVOT (
+    MAX(DeviceType)
+    FOR DeviceTypeNumber IN (DeviceType1, DeviceType2, DeviceType3)
+) AS PivotTable;
+
+
+Q6:  Stored Procedure for Pagination
+---------------------------------------
+CREATE PROCEDURE GetEmployeesWithPagination
+    @PageNumber INT,
+    @PageSize INT
+    AS
+    BEGIN
+
+    SET NOCOUNT ON;
+        SELECT *
+        FROM (
+            SELECT 
+                ROW_NUMBER() OVER (ORDER BY EmployeeID) AS RowNum,
+                *
+            FROM 
+                tblEmployees
+        ) AS EmployeeList
+        WHERE RowNum BETWEEN (@PageNumber - 1) * @PageSize + 1 AND @PageNumber * @PageSize;
+    END;
+    --OR
+    CREATE PROCEDURE GetPagedOrders
+    @PageNumber INT,
+    @PageSize INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Calculate the offset
+    DECLARE @Offset INT = (@PageNumber - 1) * @PageSize;
+
+    -- Select paged results
+    SELECT OrderID, OrderDate, CustomerName, OrderAmount
+    FROM Orders
+    ORDER BY OrderID
+    OFFSET @Offset ROWS
+    FETCH NEXT @PageSize ROWS ONLY;
+END;
+

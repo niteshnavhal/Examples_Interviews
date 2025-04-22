@@ -1,0 +1,111 @@
+﻿SQL Interview Questions - HR
+==========================================
+
+Q1: Tell Me About Yourself
+---------------------------------------------------------------------------
+
+I’m a dedicated Senior .NET Developer with several years of experience designing and developing RESTful APIs using .NET Core, following clean architecture and repository pattern. My daily responsibilities involve building and consuming APIs, managing CMS content modules, and working on dynamic frontend pages for listing, detail, update, and reporting functionalities.
+
+I’ve worked extensively with MS SQL Server, where I create complex stored procedures tailored to reporting APIs and views, often combining data from multiple tables. I also configure sub-reports based on business needs.
+
+On the deployment side, I handle IIS setup, manage publish profiles, and ensure smooth CI/CD processes using Bitbucket for code versioning.
+
+One of my recent exciting projects involved developing a live cricket scoring panel. This included team and player management, real-time event tracking based on cricket rules, and broadcasting live data using SignalR and jQuery.
+
+I'm passionate about delivering scalable solutions and continuously improving systems to meet dynamic business needs. I'm excited for the opportunity to bring my skills to a senior role and contribute effectively from day one.
+
+Q2: JWT Token Setup in .NET 8 (Short Version)
+---------------------------------------------------------------------------
+
+1. **Install NuGet Packages**:
+   - Microsoft.AspNetCore.Authentication.JwtBearer
+   - System.IdentityModel.Tokens.Jwt
+   - Microsoft.IdentityModel.Tokens
+   - Microsoft.AspNetCore.Authentication
+   - Microsoft.AspNetCore.Authorization
+   2. **Configure JWT in Startup.cs**:
+   ```csharp
+   public void ConfigureServices(IServiceCollection services)
+   {
+	   services.AddAuthentication(options =>
+	   {
+		   options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+		   options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+	   })
+	   .AddJwtBearer(options =>
+	   {
+		   options.TokenValidationParameters = new TokenValidationParameters
+		   {
+			   ValidateIssuer = true,
+			   ValidateAudience = true,
+			   ValidateLifetime = true,
+			   ValidateIssuerSigningKey = true,
+			   ValidIssuer = Configuration["Jwt:Issuer"],
+			   ValidAudience = Configuration["Jwt:Audience"],
+			   IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"]))
+		   };
+	   });
+	   services.AddAuthorization(options =>
+	   {
+		   options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+	   });
+   }
+   ```
+   ---------------->
+   var token = new JwtSecurityToken(
+    issuer: "yourIssuer",
+    audience: "yourAudience",
+    expires: DateTime.Now.AddHours(1),
+    signingCredentials: new SigningCredentials(
+        new SymmetricSecurityKey(Encoding.UTF8.GetBytes("Your_Secret_Key")),
+        SecurityAlgorithms.HmacSha256)
+);
+
+return new JwtSecurityTokenHandler().WriteToken(token);
+
+
+Q3: SignalR Short Example (Backend + Client)
+---------------------------------------------------------------------------
+1. **Backend Setup**:
+   - Install NuGet Package: Microsoft.AspNetCore.SignalR
+   - In Startup.cs:
+   ```csharp
+   public void ConfigureServices(IServiceCollection services)
+   {
+	   services.AddSignalR();
+   }
+   public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+   {
+	   app.UseRouting();
+	   app.UseEndpoints(endpoints =>
+	   {
+		   endpoints.MapHub<YourHub>("/yourHub");
+	   });
+   }
+   ```
+   - Create Hub Class:
+   ```csharp
+   public class YourHub : Hub
+   {
+	   public async Task SendMessage(string user, string message)
+	   {
+		   await Clients.All.SendAsync("ReceiveMessage", user, message);
+	   }
+   }
+   ```
+   2. **Client Setup**:
+   - Install SignalR Client Library: Microsoft.AspNetCore.SignalR.Client
+   - In your JavaScript file:
+   ```javascript
+   const connection = new signalR.HubConnectionBuilder()
+	   .withUrl("/yourHub")
+	   .build();
+	  
+
+
+
+
+
+
+
+
