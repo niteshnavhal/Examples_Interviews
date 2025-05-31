@@ -1,0 +1,1276 @@
+﻿SQL Interview Questions BY ASP.NET Core.
+==========================================
+(Note for more Information Add this text After Question ::- explain in simple way that say with me for long and interviewer)
+
+
+Q1: Describe the ASP.NET Core.
+-------------------------------------------
+ASP.NET Core is an open-source, cross-platform and high performance platform that allows you to build modern, fast, secure and cloud enabled applications. With ASP.NET Core you can
+
+Build web applications, IoT (Internet of things) apps, services and mobile Backends.
+It run on .Net Core.
+You can do your development on Linux, Windows and MacOS.
+Deploy your code to cloud or on-premises.
+
+
+
+Q2. How to configure multiple environments in ASP.NET Core application, Examples ?
+------------------------------------------------------------------------------------
+
+In ASP.NET Core, we can configure multiple environments like Development, Staging, and Production by using the ASPNETCORE_ENVIRONMENT variable.
+We usually keep environment-specific settings in separate appsettings.{Environment}.json files.
+Based on the environment, the application automatically loads the right settings.
+
+For example, in Development, we might show detailed errors and connect to a local database, while in Production, we use a secured database and disable detailed errors.
+
+How ASP.NET Core detects Environment
+It reads an environment variable called:
+ASPNETCORE_ENVIRONMENT
+
+You usually set this variable in:
+
+launchSettings.json (for local)
+
+System environment variables (on server)
+
+In the hosting configuration
+
+2. Create different appsettings files
+You create environment-specific config files:
+
+appsettings.json → Common settings for all environments
+
+appsettings.Development.json → Settings only for Development
+
+appsettings.Staging.json → Settings only for Staging
+
+appsettings.Production.json → Settings only for Production
+4. How to Set Environment in Production
+On your deployment server, set environment variable:
+
+For Linux:
+export ASPNETCORE_ENVIRONMENT=Production
+For Windows:
+setx ASPNETCORE_ENVIRONMENT "Production"
+For IIS:
+In the IIS Manager, select your application pool, go to "Advanced Settings", and set the "Environment Variables" to ASPNETCORE_ENVIRONMENT=Production.
+For example, in the Startup.cs file, we can check the environment and load specific settings:
+```csharp
+public class Startup
+{
+    public Startup(IConfiguration configuration, IWebHostEnvironment env)
+    {
+        Configuration = configuration;
+        Environment = env;
+    }
+    public IConfiguration Configuration { get; }
+    public IWebHostEnvironment Environment { get; }
+    public void ConfigureServices(IServiceCollection services)
+    {
+        // Load environment-specific settings
+        if (Environment.IsDevelopment())
+        {
+            // Development-specific services
+        }
+        else if (Environment.IsProduction())
+        {
+            // Production-specific services
+        }
+    }
+}
+
+
+
+Q3. Explain the dependency injection.?
+------------------------------------------------------------------------------------
+DI helps build loosely-coupled applications by injecting services instead of hardcoding them.
+Dependency Injection is a design pattern where a class receives its dependencies from an external source instead of creating them.
+In ASP.NET Core, DI is built-in.
+We register services in the DI container, and the framework injects them where needed, making the code loosely coupled, easier to test, and maintainable
+
+
+
+Q4. What is Middleware in ASP.NET Core?
+------------------------------------------------------------------------------------
+Middleware is a series of request processors, where each middleware either handles the request or passes it forward.
+I have also built custom middleware for logging, error handling, and request validation in my projects.\\
+
+Middleware is like a chain of steps that handle every HTTP request and response.
+When a request comes, it passes through multiple middleware one after another.
+Each middleware can:
+Do something (like check authentication)
+Modify the request or response
+Stop the request or pass it to the next middleware
+
+
+
+Q5. What is Request Pipeline in ASP.NET Core?
+------------------------------------------------------------------------------------
+In ASP.NET Core, the request pipeline is made of middleware that handle HTTP requests.
+
+We use 'Use' to add middleware that can call the next middleware,
+'Run' to add a terminal middleware that ends the pipeline,
+and 'Map' to create branches based on the request URL.
+This design makes ASP.NET Core highly flexible and modular
+The request pipeline is the series of middleware components that process HTTP requests in ASP.NET Core.
+When a request comes in, it goes through each middleware in the order they are registered.
+
+The Request Pipeline is the path that every HTTP request travels through inside an ASP.NET Core app.
+
+Each step (middleware) in the path can inspect, modify, or handle the request.
+
+A request pipeline or middleware pipeline consists of a sequence of request delegates which are called one after another to perform operations before and after the next delegate. 
+For more about request processing pipeline for ASP.NET MVC visit Request Processing Pipeline.
+
+app.Use method adds a middleware delegate to the application's request pipeline. When you want to pass the context to the next middleware then prefer app.Use method.
+app.Run method adds a terminal middleware delegate to the application's request pipeline. When you want to terminate the pipeline then prefer to use the app.Run method.
+
+Q5.1. What is Request delegate?
+------------------------------------------------------------------------------------
+Request delegates handle each HTTP request and are used to build request pipeline. 
+It can configured using Run, Map and Use extension methods. 
+An request delegate can be a in-line as an anonymous method (called in-line middleware) or a reusable class. These classes or in-line methods are called middleware components.
+
+
+
+Q6. What are Filters in ASP.NET Core?
+------------------------------------------------------------------------------------
+
+Filters in ASP.NET Core allow us to run code before or after actions, like authorization, logging, or exception handling.
+Attributes like [HttpGet] control the HTTP method, while [Authorize] controls user access security.
+We can use filters in APIs and MVC functions easily, and also create custom filters for reusable logic.
+
+Filters in ASP.NET Core are components that allow us to run code before or after controller actions and results.
+They are useful for cross-cutting concerns like authentication, logging, validation, and error handling.
+We can use built-in filters like [Authorize] or create custom filters depending on our application needs.
+
+Filters are special pieces of code that run before or after a Controller or Action (API method).
+
+They allow you to add common logic like validation, authentication, logging, error handling, etc.
+
+Where Filters Work?
+Before Action runs
+
+After Action runs
+
+Before Result sends (like View or JSON)
+
+After Result sends
+
+Filter Type	When it runs	Example
+Authorization Filter	Checks if user is allowed	[Authorize]
+Action Filter	Before and After Action executes	Validate data, Logging
+Result Filter	Before and After sending Result	Modify the response
+Exception Filter	If an error happens	Global error handling
+
+[Authorize]
+public class SecureController : ControllerBase
+{
+    [HttpGet]
+    public IActionResult SecretData()
+    {
+        return Ok("This is secret!");
+    }
+}
+
+
+Q7. What is Logging in ASP.NET Core?
+------------------------------------------------------------------------------------
+Logging in ASP.NET Core helps record important information about the application during its execution.
+It uses the built-in ILogger interface to log events at different levels like Info, Warning, Error, etc.
+Logs can be written to console, files, or external systems.
+We inject ILogger into classes and use it to record events for monitoring and troubleshooting.
+Logs can be saved to:
+Console
+Files
+Databases
+Cloud (like Azure, AWS)
+
+
+
+Q8. Explain the concept of routing.
+------------------------------------------------------------------------------------
+Routing in ASP.NET Core is the system that maps incoming requests to the correct controller and action method.
+
+It can be set up using conventional routing (general patterns) or attribute routing (directly on controllers and actions).
+Routing plays a critical role in building clean, user-friendly URLs, and passing parameters from the URL to our code.
+Simple words:
+
+Routing is the system that maps incoming HTTP requests (like URLs) to the correct controller and action method in your app.
+  app.UseRouting(); // It adds route matching to middlware pipeline
+
+app.MapControllers();  // Tells app to use attribute-based routing
+
+public class ProductsController : Controller
+{
+    [HttpGet("products/details/{id}")]
+    public IActionResult Details(int id)
+    {
+        return Content($"Product ID is {id}");
+    }
+}
+
+Type	              ||   Explanation
+_____________________________________________
+Conventional Routing  ||  Define a general pattern for all routes (like a template)
+Attribute Routing	  ||  Define routes directly on controllers and actions
+
+
+
+
+
+Q9 What is In-Memory Cache in ASP.NET Core?
+------------------------------------------------------------------------------------
+In-Memory Cache in ASP.NET Core is used to store frequently accessed data in the application's RAM to avoid repeated calculations or database calls.
+
+We use the IMemoryCache service to read and write to the cache.
+Cached data is temporary and improves performance and scalability.
+It's ideal for small datasets that need fast retrieval.
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add In-Memory Caching
+builder.Services.AddMemoryCache();
+
+var app = builder.Build();
+
+app.MapControllers();
+app.Run();
+using Microsoft.Extensions.Caching.Memory;
+
+[ApiController]
+[Route("api/[controller]")]
+public class ProductsController : ControllerBase
+{
+    private readonly IMemoryCache _memoryCache;
+
+    public ProductsController(IMemoryCache memoryCache)
+    {
+        _memoryCache = memoryCache;
+    }
+
+    [HttpGet("top-products")]
+    public IActionResult GetTopProducts()
+    {
+        // Try to get data from cache
+        if (!_memoryCache.TryGetValue("topProducts", out List<string> products))
+        {
+            // If not found in cache, create data
+            products = new List<string> { "Laptop", "Tablet", "Smartphone", "Camera" };
+
+            // Set data in cache with expiration of 5 minutes
+            _memoryCache.Set("topProducts", products, TimeSpan.FromMinutes(5));
+        }
+
+        return Ok(products);
+    }
+}
+
+
+
+Q10.What is CSRF / XSRF?
+------------------------------------------------------------------------------------
+CSRF stands for Cross-Site Request Forgery. It's a security attack where an attacker tricks a logged-in user into sending unwanted requests to a website.
+
+ASP.NET Core prevents CSRF by using Anti-Forgery Tokens. These tokens ensure that a POST request truly comes from the original site, not from a malicious page.
+
+We use @Html.AntiForgeryToken() in forms and decorate our POST actions with [ValidateAntiForgeryToken] to protect against CSRF attacks
+
+Is CSRF a problem for GET requests?
+👉 No, only for POST/PUT/DELETE because GET requests should not change data.
+
+✅ Is CSRF the same as XSS?
+👉 No, CSRF tricks the user.
+👉 XSS (Cross-Site Scripting) injects scripts into the site itself.
+
+
+
+
+Q11 . What is CORS?
+------------------------------------------------------------------------------------
+CORS stands for Cross-Origin Resource Sharing. 
+It's a security feature that allows or restricts web applications running at one origin (domain) to make requests to resources on a different origin.
+CORS is important for web APIs that need to be accessed from different domains.
+
+
+
+
+Q12.Role of Startup Class in ASP.NET Core
+------------------------------------------------------------------------------------
+In older ASP.NET Core versions, the Startup class was used to configure services and define the request pipeline.
+It contained ConfigureServices for service registration and Configure for middleware setup.
+
+From .NET 6 onwards, Microsoft introduced the Minimal Hosting Model, allowing the Program.cs to handle both service configuration and pipeline setup.
+This simplified project structures, especially for small APIs and microservices.
+In older ASP.NET Core versions, the Startup class was the main class that told the application:
+
+How to configure services (like Dependency Injection, Database, etc.)
+
+How to configure the HTTP Request pipeline (Middleware)
+
+✅ It had two main important methods:
+
+
+Method	Purpose
+ConfigureServices(IServiceCollection services)	Register all services (e.g., database context, authentication, logging)
+Configure(IApplicationBuilder app, IWebHostEnvironment env)	Define middleware and request pipeline (e.g., routing, authentication, error handling)
+
+
+
+Q13. What are the benefits of using ASP.NET Core over ASP.NET?
+------------------------------------------------------------------------------------
+ASP.NET Core comes with the following benefits over ASP.NET.
+
+Cross platform, provide ability to develop and run on Windows, Linux and MacOS.
+Open-source
+Side-by-side versioning
+Unified Platform to develop Web UI and services.
+Built-in dependency injection.
+Ability to deploy on more than one server like IIS, Kestrel, Nginx, Docker, Apache etc
+cloud enabled framework, provide support for environment based configuration systems.
+Lightweight, High performance and modern HTTP request pipelines.
+Well suited architecture for testability
+Integration of many client-side frameworks like Angular any version
+Blazor allow you to use C# code in browser with JavaScript code.
+
+
+
+
+Q14. What is the role of ConfigureServices and Configure method?
+------------------------------------------------------------------------------------
+ConfigureServices method is optional and defined inside startup class as mentioned in above code.
+It gets called by the host before the 'Configure' method to configure the app's services.
+Configure method is used to add middleware components to the IApplicationBuilder instance that's available in Configure method. 
+Configure method also specifies how the app responds to HTTP request and response.
+ApplicationBuilder instance's 'Use...' extension method is used to add one or more middleware components to request pipeline.
+You can configure the services and middleware components without the Startup class and it's methods, by defining this configuration inside the Program class in CreateHostBuilder method.
+
+
+Q15. Describe the Service Lifetimes.
+------------------------------------------------------------------------------------
+
+When Services are registered, there is a lifetime for every service. ASP.NET Core provides the following lifetimes.
+
+Transient - Services with transient lifetime are created each time they are requested from service container. So it's best suited for stateless, light weight services.
+Scoped - Services with scoped lifetime are created once per connection or client request. When using scoped service in middleware then inject the service via invoke or invokeAsync method. You should not inject the service via constructor injection as it treats the service behavior like Singleton.
+Singleton - Service with singleton lifetime is created once when first time the service is requested. For subsequent requests same instance is served by service container
+
+
+Q16. What is Host in ASP.NET Core?
+------------------------------------------------------------------------------------
+Host encapsulates all the resources for the app. On startup, ASP.NET Core application creates the host. The Resources which are encapsulated by the host include:
+
+HTTP Server implementation
+Dependency Injection
+Configuration
+Logging
+Middleware components
+
+
+
+Q17. Describe the Generic Host and Web Host.
+------------------------------------------------------------------------------------
+The host setup the server, request pipeline and responsible for app startup and lifetime management. There are two hosts:
+.NET Generic Host
+ASP.NET Core Web Host
+.NET Generic Host is recommended and ASP.NET Core template builds a .NET Generic Host on app startup.
+
+
+Q18. Describe the Servers in ASP.NET Core.
+------------------------------------------------------------------------------------
+Server is required to run any application. ASP.NET Core provides an in-process HTTP server implementation to run the app. This server implementation listen for HTTP requests and surface them to the application as a set of request features composed into an HttpContext.
+ASP.NET Core use the Kestrel web server by default. ASP.NET Core comes with:
+
+Default Kestrel web server that's cross platform HTTP server implementation.
+IIS HTTP Server that's in-process server for IIS.
+HTTP.sys server that's a Windows-only HTTP server and it's based on the HTTP.sys kernel driver and HTTP Server API.
+
+
+Q19.. How Configuration works in ASP.NET Core?
+------------------------------------------------------------------------------------
+In ASP.NET Core, Configuration is implemented using various configuration providers. 
+Configuration data is present in the form of key value pairs that can be read by configuration providers as key value from different configuration sources as below.
+appsettings.json - settings file
+Azure Key Vault
+Environment variables
+In-memory .Net objects
+Command Line Arguments
+Custom Providers
+By default apps are configured to read the configuration data from appsettings.json, 
+environment variables, command line arguments etc. 
+While reading the data, values from environment variables override appsettings.json data values. 'CreateDefaultBuilder' method provide default configuration.
+
+
+
+Q20. What is the Options Pattern in ASP.NET Core?
+------------------------------------------------------------------------------------
+Options Pattern allow you to access related configuration settings in Strongly typed way using some classes. 
+When you are accessing the configuration settings with the isolated classes, The app should adhere these two principles.
+
+Interface Segregation Principle (ISP) or Encapsulation: The class the depend on the configurations, should depend only on the configuration settings that they use.
+Separation of Concerns: Settings for different classes should not be related or dependent on one another.
+
+
+
+Q21.How to handle errors in ASP.NET Core?
+------------------------------------------------------------------------------------
+ASP.NET Core provides a better way to handle the errors in Startup class as below.
+
+    if (env.IsDevelopment())
+    {
+    app.UseDeveloperExceptionPage();
+    }
+    else
+    {
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
+    }
+For development environment, Developer exception page display detailed information about the exception. You should place this middleware before other middlewares for which you want to catch exceptions. For other environments UseExceptionHandler middleware loads the proper Error page.
+You can configure error code specific pages in Startup class Configure method as below.
+
+    app.Use(async (context, next) =>
+    {
+    await next();
+    if (context.Response.StatusCode == 404)
+    {
+    context.Request.Path = "/not-found";
+    await next();
+    }
+    if (context.Response.StatusCode == 403 || context.Response.StatusCode == 503 || context.Response.StatusCode == 500)
+    {
+    context.Request.Path = "/Home/Error";
+    await next();
+    }
+    });
+
+
+
+
+Q22. How ASP.NET Core serve static files?
+------------------------------------------------------------------------------------
+In ASP.NET Core, Static files such as CSS, images, JavaScript files, HTML are the served directly to the clients. ASP.NET Core template provides a root folder called wwwroot which contains all these static files. UseStaticFiles() method inside Startup.Configure enables the static files to be served to client.
+You can serve files outside of this webroot folder by configuring Static File Middleware as following.
+
+
+app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(
+            Path.Combine(env.ContentRootPath, "MyStaticFiles")), // MyStaticFiles is new folder
+        RequestPath = "/StaticFiles"  // this is requested path by client
+    });
+// now you can use your file as below
+<img src="/StaticFiles/images/profile.jpg" class="img" alt="A red rose" />
+
+
+
+Q23.Explain Session and State management in ASP.NET Core
+------------------------------------------------------------------------------------
+As we know HTTP is a stateless protocol. HTTP requests are independent and does not retain user values. There are different ways to maintain user state between multiple HTTP requests.
+
+Cookies
+Session State
+TempData
+Query strings
+Hidden fields
+HttpContext.Items
+Cache
+
+
+Q24. Can ASP.NET Application be run in Docker containers?
+------------------------------------------------------------------------------------
+Yes, you can run an ASP.NET application or .NET Core application in Docker containers.
+
+For Docker interview questions visit Docker Questions
+For more about .NET and Docker visit .NET and Docker and Docker images for ASP.NET Core
+
+
+Q25.How does Model Binding work in ASP.NET Core?
+------------------------------------------------------------------------------------
+Model binding provides the capability to map the data from HTTP requests to action method parameters in your controller. 
+It simplifies handling incoming data by automatically converting it from various sources such as JSON, form values, query strings, route data etc., into .NET objects. 
+Model binding helps in reducing manual parsing of data and binding that data to .NET types. Model binding happens after the routing system selects the action method
+
+
+Q26. Explain Custom Model Binding.
+------------------------------------------------------------------------------------
+Custom Model Binding in ASP.NET Core is a mechanism that allows developers to create their own custom model binders to handle specific cases where the built-in model binders are not suitable or need additional processing. It provides flexibility and extensibility to the model binding process, which maps data from an HTTP request to an action method's parameters or a Razor Page's properties.
+To create a Custom Model Binder in ASP.NET Core, you need to follow these steps:
+Create a class that implements the IModelBinder interface or derives from the ModelBinder class.
+Implement the BindModelAsync method, which is responsible for binding the data from the request to the target model.
+Register the custom model binder either globally or at the action method level.
+
+
+Q27. Describe Model Validation.
+------------------------------------------------------------------------------------
+Model Validation in ASP.NET Core is the process of ensuring that the data submitted by the user meets certain rules and constraints before processing it further.
+It helps to maintain data integrity and prevent invalid or malicious data from being processed by the application.
+ASP.NET Core provides built-in support for model validation using data annotations. 
+These annotations are applied to the properties of the model class, and they define the validation rules that should be enforced. 
+For example, the [Required] attribute specifies that a property must have a non-null value, and the [StringLength] attribute sets the minimum and maximum length for a string property.
+When a request is made, ASP.NET Core automatically validates the model based on the defined validation rules. 
+If any validation errors occur, they are added to the ModelState object, which can be accessed and displayed to the user.
+
+
+
+Q28. How to access HttpContext in ASP.NET Core?
+------------------------------------------------------------------------------------
+HttpContext in ASP.NET Core holds all the information about an incoming HTTP request.
+
+In Controllers, we can directly access HttpContext property.
+In Service classes, where direct access is not possible, we inject IHttpContextAccessor to retrieve the current HttpContext.
+
+This design improves testability and follows dependency injection principles.
+
+HttpContext is an object that contains all information about an HTTP request — like user details, headers, cookies, session, etc.
+ [HttpGet("get-user")]
+    public IActionResult GetUserInfo()
+    {
+        var userName = HttpContext.User.Identity.Name;
+        var ipAddress = HttpContext.Connection.RemoteIpAddress.ToString();
+
+        return Ok($"User: {userName}, IP: {ipAddress}");
+    }
+What you can get | How to get it
+Origin / Referer (who sent the request) | HttpContext.Request.Headers["Origin"] or HttpContext.Request.Headers["Referer"]
+IP Address | HttpContext.Connection.RemoteIpAddress
+User Agent (browser/device info) | HttpContext.Request.Headers["User-Agent"]
+Query Strings | HttpContext.Request.Query["keyName"]
+Request Path | HttpContext.Request.Path
+Request Method (GET/POST) | HttpContext.Request.Method
+Request Headers | HttpContext.Request.Headers
+Cookies | HttpContext.Request.Cookies
+Session Data | HttpContext.Session.GetString("key")
+Authenticated User Info | HttpContext.User.Claims, HttpContext.User.Identity.Name
+Request Body (for POST data) | Need to read via HttpContext.Request.Body
+
+
+Q29. What is the difference between IHostingEnvironment and IWebHostEnvironment?
+------------------------------------------------------------------------------------
+IHostingEnvironment is used in ASP.NET Core 2.x and earlier versions.
+IWebHostEnvironment is used in ASP.NET Core 3.x and later versions.
+IWebHostEnvironment is the newer interface and is recommended for use in modern ASP.NET Core applications.
+IWebHostEnvironment is a more modern and flexible interface that provides additional properties and methods for working with the hosting environment.
+IWebHostEnvironment has properties like ApplicationName, EnvironmentName, and WebRootPath.
+IHostingEnvironment has properties like ApplicationName, EnvironmentName, and WebRootPath.
+
+
+Q30. Explain the Change Token
+------------------------------------------------------------------------------------
+
+Change Token is a mechanism in ASP.NET Core that helps detect changes in resources like configuration files or cache entries.
+When a change is detected, a registered callback function is triggered automatically, allowing the app to update itself dynamically without restarting.
+
+Change Token is like a watchdog 🐶 inside your app.
+It keeps watching if something changes (like a file, a configuration, or a setting), and alerts your app when it happens.
+Main use:
+
+Detect file changes (like appsettings.json update)
+
+Detect configuration changes (dynamic reload)
+
+Build real-time reaction in the app
+Type | Meaning
+Active Change Token | Notifies when change happens automatically
+Manual Change Token | You manually signal the change
+
+
+Q31. How to used ASP.NET Core APIs in class library?
+------------------------------------------------------------------------------------
+In ASP.NET Core, if we want to use APIs like IConfiguration or ILogger inside a Class Library,
+we design the classes to accept these services via constructor injection.
+
+The Main API project will register and inject these dependencies, and pass them to the class library at runtime.
+
+This approach follows Dependency Injection and makes libraries reusable, testable, and decoupled.
+A Class Library is just a helper project (.NET project) that doesn’t run by itself.
+It provides logic (functions, services, models) that your main ASP.NET Core API can use.
+
+Q32. How to use SignalR in ASP.NET Core?
+------------------------------------------------------------------------------------
+1. **Server Setup**:
+   - Install SignalR NuGet Package: Microsoft.AspNetCore.SignalR
+   - In your Startup.cs:
+   ```csharp
+   public void ConfigureServices(IServiceCollection services)
+   {
+       services.AddSignalR();
+   }
+   public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+   {
+       app.UseRouting();
+       app.UseEndpoints(endpoints =>
+       {
+           endpoints.MapHub<YourHub>("/yourHub");
+       });
+   }
+   ```
+   - Create Hub Class:
+   ```csharp
+   public class YourHub : Hub
+   {
+       public async Task SendMessage(string user, string message)
+       {
+           await Clients.All.SendAsync("ReceiveMessage", user, message);
+       }
+   }
+   ```
+   2. **Client Setup**:
+   - Install SignalR Client Library: Microsoft.AspNetCore.SignalR.Client
+   - In your JavaScript file:
+   ```javascript
+   const connection = new signalR.HubConnectionBuilder()
+       .withUrl("/yourHub")
+       .build();
+       connection.on("ReceiveMessage", (user, message) => {
+       const msg = `${user}: ${message}`;
+           console.log(msg);
+       });
+       connection.start()
+           .then(() => console.log("Connected to SignalR Hub"))
+           .catch(err => console.error(err));
+           ```
+
+
+
+
+Q33. What is the Open Web Interface for .NET (OWIN)
+------------------------------------------------------------------------------------
+OWIN is a standard that decouples the web server from the application in .NET.
+It provides a simple way for apps to run on different servers and environments without being tied to one specific server like IIS.
+
+OWIN also makes it easy to build middleware components that can be plugged into the request pipeline
+
+OWIN stands for Open Web Interface for .NET.
+
+It is like a middle-person 🤝 between a web server (like IIS) and your .NET application.
+
+It separates the server and the application, so they can work independently.
+Problems before:
+
+ASP.NET was tightly coupled to IIS.
+
+Hard to host apps in different environments (cloud, containers, etc.).
+
+✅ OWIN solved it:
+
+Made apps portable.
+
+Made apps modular (small, lightweight, only what you need).
+
+public class Startup
+{
+    public void Configuration(IAppBuilder app)
+    {
+        app.Run(context =>
+        {
+            return context.Response.WriteAsync("Hello from OWIN!");
+        });
+    }
+}
+
+
+
+
+Q34. Describe the URL Rewriting Middleware in ASP.NET Core.
+------------------------------------------------------------------------------------
+URL Rewriting Middleware in ASP.NET Core is used to change the incoming request URL before it reaches the application logic.
+
+It can be used to redirect old URLs to new URLs, fix URL formats for SEO, or hide internal paths from users.
+
+It improves application structure, search engine optimization, and user experience.
+Configure in Program.cs
+```csharp
+public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+{
+    app.UseRewriter(new RewriteOptions()
+        .AddRedirect("^old-path$", "new-path"));
+}
+    app.UseMvc();
+}
+public class Startup
+{
+    public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+    {
+        var options = new RewriteOptions()
+            .AddRedirect("old-path", "new-path");
+        app.UseRewriter(options);
+    }
+}
+```
+
+
+
+Q35. Describe the application model in ASP.NET Core.
+------------------------------------------------------------------------------------
+Application Model is the internal blueprint that ASP.NET Core creates by reading controllers, actions, routes, filters, and parameters before the app runs.
+
+This model helps the framework know how to route incoming requests to the correct action method.
+
+The Application Model in ASP.NET Core is a blueprint 🏗️
+that describes how your controllers, actions, routes, parameters, and filters are organized inside the app.
+
+
+
+
+Q36. Explain the Caching or Response caching in ASP.NET Core.
+------------------------------------------------------------------------------------
+Caching significantly improves the performance of an application by reducing the number of calls to actual data source.
+It also improves the scalability. Response caching is best suited for data that changes infrequently.
+Caching makes the copy of data and store it instead of generating data from original source.
+Response caching headers control the response caching. ResponseCache attribute sets these caching headers with additional properties.
+
+
+
+Q36.What is Distributed caching?
+------------------------------------------------------------------------------------
+Distributed Caching is when cached data is stored outside of the application server in a shared system like Redis.
+
+This allows multiple app servers to access the same cached data, making the application scalable, reliable, and consistent across different servers.
+
+
+Distributed caching is a caching mechanism that allows multiple servers to share the same cache data.
+This is useful in load-balanced environments where multiple instances of an application need to access the same cached data.
+Distributed caching is a way to store data in a shared cache that can be accessed by multiple servers or instances of an application.
+How Distributed Caching works in ASP.NET Core?
+✅ ASP.NET Core has built-in support for Distributed Caching.
+
+You just plug in a provider like:
+
+Redis (most popular 🔥)
+
+SQL Server (database-backed cache)
+
+NCache (enterprise level)
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = "localhost:6379"; // Redis server
+    options.InstanceName = "MyApp_";
+});
+
+
+
+Q37.  How to prevent Cross-Site Scripting (XSS) in ASP.NET Core?
+------------------------------------------------------------------------------------
+
+CORS (Cross-Origin Resource Sharing) is a browser security feature that restricts web pages from making requests to a different domain.
+
+In ASP.NET Core, you can enable CORS by configuring it in Program.cs, specifying allowed origins, methods, and headers.
+
+Once configured, you apply the CORS policy globally or to specific controllers, enabling cross-origin requests from trusted domains.
+XSS happens when malicious scripts are injected into web pages and executed in users' browsers.
+
+In ASP.NET Core, Razor Pages and MVC automatically encode outputs, helping prevent XSS.
+
+Best practices include validating user input, avoiding Html.Raw(), using Content Security Policies, and sanitizing HTML when necessary.
+
+XSS is a security vulnerability that allows attackers to inject malicious scripts into web pages viewed by other users.
+ASP.NET Core provides built-in protection against XSS attacks by encoding output data and validating input data.
+To prevent XSS attacks, ASP.NET Core automatically encodes HTML output using Razor syntax.
+```csharp
+@Html.Encode(Model.UserInput)
+```
+This ensures that any user input is treated as plain text and not executed as code.
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add CORS services
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()    // Allow all origins
+              .AllowAnyHeader()    // Allow any header
+              .AllowAnyMethod();   // Allow any HTTP method (GET, POST, etc.)
+    });
+});
+
+var app = builder.Build();
+
+// Enable CORS globally
+app.UseCors("AllowAll");
+
+app.MapControllers();
+app.Run();
+
+
+OR if you only want to restrict to certain origins:
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200")   // Allow specific origin
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+
+
+Q38. What is the Area?
+------------------------------------------------------------------------------------
+Area is used to divide large ASP.NET MVC application into multiple functional groups.
+In general, for a large application Models, Views and controllers are kept in separate folders to separate the functionality. 
+But Area is a MVC structure that separate an application into multiple functional groupings. For example, for an e-commerce site Billing, Orders, search functionalities can be implemented using different areas.
+
+
+Q39. Describe the View components in ASP.NET Core.
+------------------------------------------------------------------------------------
+
+View Components in ASP.NET Core are reusable pieces of UI logic that allow you to render parts of your page (like a sidebar or recent posts) in multiple views.
+
+They are like mini controllers that return a view (HTML) but don't require a full controller or action method.
+
+You create a ViewComponent class, write the logic for getting data, and then use @await Component.InvokeAsync("ComponentName") to insert it into your page.
+
+View Components are like mini controllers that return a piece of HTML (or view) to be inserted into another view.
+
+They’re used when you need to render a part of the page multiple times in different places, like a sidebar, a footer, or a recent posts section.
+
+Think of View Components as reusable, self-contained mini-views that can be invoked in any part of your layout or page.
+
+
+
+
+
+Q40.How View compilation works in ASP.NET Core?
+------------------------------------------------------------------------------------
+View Compilation is the process where Razor views (.cshtml files) are converted into C# code during the build process.
+
+This allows ASP.NET Core to render views very efficiently, as it no longer needs to parse Razor syntax at runtime, improving performance.
+
+At runtime, compiled Razor views are treated as C# classes, and the HTML is generated by running the logic in those classes.
+
+View Compilation is the process where ASP.NET Core takes your Razor views (.cshtml files) and converts them into C# code that the application can execute at runtime.
+
+How Does View Compilation Work in ASP.NET Core?
+1. When You Build Your Project:
+When you build your ASP.NET Core project, the Razor views (.cshtml files) are compiled into C# classes. These classes are then compiled into DLLs (Dynamic Link Libraries) along with the rest of your code.
+
+So, instead of using .cshtml directly, ASP.NET Core uses the compiled C# classes to render the views.
+
+2. At Runtime:
+When a user requests a page, ASP.NET Core loads the compiled view class and runs it to generate the HTML response.
+
+This is super fast because it doesn’t have to re-parse the Razor code each time—it already has the compiled C# code.
+
+
+
+Q41. Explain Buffering and Streaming approaches to upload files in ASP.NET Core.
+------------------------------------------------------------------------------------
+File uploading in ASP.NET Core can be done using two approaches: Buffering and Streaming.
+
+Buffering means reading the entire file into memory before processing it. This works well for small files but can cause memory issues with large files.
+
+Streaming is a more efficient approach for large files where the file is processed in chunks, reducing memory usage and making the process scalable.
+
+Buffering is simple and fast for small files, but streaming is the better choice for large files because it avoids high memory consumption.
+
+
+File uploading is when users send a file from their computer to your web server. This is often done with forms and typically involves large files, so the way you handle uploads can impact both performance and memory usage.
+
+There are two common approaches for handling file uploads in ASP.NET Core:
+
+Buffering
+
+Streaming
+
+
+ What is Buffering? (Simple Words)
+👉 Buffering means the entire file is loaded into memory (RAM) before it’s processed or saved to disk.
+
+Think of Buffering as:
+A process where you hold the entire file in a temporary "buffer" (RAM) to process it all at once.
+
+📝 Pros of Buffering:
+Simpler: Easy to implement, just save or process the whole file once it’s fully uploaded.
+
+Fast for Small Files: If the file size is small, buffering is very fast and doesn't require extra handling.
+
+📝 Cons of Buffering:
+Memory Intensive: Large files can quickly consume too much memory because the entire file is stored in RAM.
+
+Not scalable for big files: Uploading large files might cause Out of Memory issues if your server has limited memory.
+
+📝 Example of Buffering in ASP.NET Core:
+[HttpPost("upload")]
+public async Task<IActionResult> UploadFile(IFormFile file)
+{
+    if (file == null || file.Length == 0)
+    {
+        return BadRequest("No file uploaded.");
+    }
+
+    // Save the entire file to disk
+    var filePath = Path.Combine("Uploads", file.FileName);
+
+    using (var stream = new FileStream(filePath, FileMode.Create))
+    {
+        await file.CopyToAsync(stream);  // Buffering happens here
+    }
+
+    return Ok(new { FilePath = filePath });
+}
+What is Streaming? (Simple Words)
+👉 Streaming is the process where data is read and written in chunks without loading the entire file into memory. This means the server processes the file as it’s being uploaded, and doesn’t store the whole file in RAM.
+
+Think of Streaming as:
+Processing the file in small parts as it's uploaded, like reading pages of a book one by one instead of reading the whole book at once.
+
+📝 Pros of Streaming:
+Memory Efficient: Only small portions of the file are loaded into memory, which is perfect for large files.
+
+Scalable: It works well with large files since the server only uses a little memory at a time.
+
+📝 Cons of Streaming:
+More Complex: Requires more code for handling chunks and managing how the data is saved.
+
+Slightly Slower: It can be a little slower for smaller files since you're reading and writing in chunks instead of a single burst.
+
+📝 Example of Streaming in ASP.NET Core:
+[HttpPost("upload-stream")]
+public async Task<IActionResult> UploadFileStream(IFormFile file)
+{
+    if (file == null || file.Length == 0)
+    {
+        return BadRequest("No file uploaded.");
+    }
+
+    var filePath = Path.Combine("Uploads", file.FileName);
+
+    // Open a stream for writing the file
+    using (var fileStream = new FileStream(filePath, FileMode.Create))
+    {
+        // Stream the file in chunks
+        await file.CopyToAsync(fileStream);  // Streaming the file here
+    }
+
+    return Ok(new { FilePath = filePath });
+}
+
+
+
+Q42. How does bundling and minification work in ASP.NET Core?
+------------------------------------------------------------------------------------
+
+Bundling and Minification are techniques used in ASP.NET Core to improve website performance.
+
+Bundling groups multiple files (like CSS and JavaScript) into a single file, reducing the number of HTTP requests the browser needs to make.
+
+Minification removes unnecessary characters (like spaces and comments) from these files, making them smaller and faster to download.
+
+Together, bundling and minification help make your site load faster, improving performance and user experience.
+
+
+👉 Bundling is the process of grouping multiple files (like CSS or JavaScript files) into a single file to reduce the number of HTTP requests made by the browser when loading your website. This makes your site faster because fewer requests are needed.
+
+👉 Minification is the process of removing unnecessary characters (like spaces, line breaks, and comments) from your files to reduce their size, making them faster to load.
+
+How Does Minification Work in ASP.NET Core?
+Minification works by removing unnecessary spaces, line breaks, and comments from your code to reduce the file size.
+
+For example:
+
+Original JavaScript (Unminified):function greetUser(name) {
+    console.log("Hello, " + name + "!");
+}
+
+
+
+
+Q43. How will you improve performance of ASP.NET Core Application?
+------------------------------------------------------------------------------------
+To improve the performance of an ASP.NET Core application, you can implement several strategies. Here are some clear and simple examples:
+
+Use Caching: Implement Redis or other distributed, inmemory caching solutions to store and share frequently accessed data.
+Enable Response Compression: Compress responses to reduce data transfer size.
+Asynchronous Programming: Use async/await for I/O-bound operations to improve responsiveness.
+Optimize Database Queries: Use efficient queries and include only necessary data.
+Eager Loading with Explicit Loading:: Instead of relying on lazy loading, which can lead to the "N+1 query problem," use eager loading for related entities when you know you'll need them, and explicit loading for scenarios where you conditionally need related data.
+Output Caching: Cache entire page outputs for faster subsequent requests.
+Minimize View State: Reduce the size of view state in web forms.
+CDN for Static Files: Serve static files (images, CSS, JS) from a Content Delivery Network.
+Minification and Bundling: Combine and minify CSS and JavaScript files.
+Server-Side Pagination: Use server-side pagination to limit data transfer and improve query performance.
+Compiled Queries: Compile LINQ queries for faster execution, especially for frequently used queries.
+
+
+
+Q44.What tools have you used for diagnosing performance issues in ASP.NET Core Application?
+------------------------------------------------------------------------------------
+Visual Studio comes with default profiling and diagnostics tools, which you can use at development time from the visual studio. 
+These are the built-in tools and allow the analysis of memory usage, CPU usage and performance events in ASP.NET Core applications.
+
+
+Q45. Describe the ASP.NET Core MVC.
+------------------------------------------------------------------------------------
+ASP.NET Core MVC is a framework to build web applications and APIs. It's based on Model-View-Controller (MVC) Design Pattern. This design pattern separate an application into three main components known as Model, View and Controller. It also helps to achieve SoC (Separation of Concern) design principle.
+ASP.NET Core MVC is light weight, open-source and testable framework to build web applications and services.
+
+
+Q46.Explain the Model, View and Controller.
+------------------------------------------------------------------------------------
+ASP.NET MVC has three main group of components Model, View and Controller, Each one has his own responsibilities as below.
+
+Model - It contains the business logic and represents the state of an application. It also performs the operation on the data and encapsulates the logic to persist an application state. Strongly-typed Views use View-Model pattern to display the data in the view.
+View - It's responsible to present the content via User interface. It does not contain much logic and use Razor View Engine to embed .NET code into view. If you need to perform much logic to display the data then prefer to use View Component, View Model or View Template for simplify view.
+Controller - It's responsible to handle user interactions, It works with model and select the view to display. Controller is the main entry point that decides the model with which it works and decide which view it needs to display. Hence it's name - Controller means controls user inputs and interactions.
+
+
+Q47.Explain View-Model.
+------------------------------------------------------------------------------------
+ViewModel is used to pass a complex data from controller to view. ViewModel data is prepared from different models and passed to view to display that data. For example, A Complex data model can be passed with the help of ViewModel.
+
+
+    Class Author{
+    public int Id {get;set;}
+    public Book Book {get;set;}
+    }
+    Class Book{
+    public string Name {get;set;}
+    public string PublisherName {get;set;}
+    }
+
+
+
+Q48. Explain strongly-typed views.
+------------------------------------------------------------------------------------
+Strongly-typed views are tightly bound to a model. for example, In above question if you want to pass the author data to view then you need to write below code for type checking in your view. 
+@model Author. Controller can pass strongly type model to view that enables type checking and intelliSense support in view.
+
+
+Q49.Describe Attribute based routing.
+------------------------------------------------------------------------------------
+Attribute Routing gives you more control over the URIs in your web application.
+MVC 5 supports this attribute based routing where attributes are used to define the routes. 
+You can manage resource hierarchies in better way using attribute based routing. 
+Attribute based routing is used to create routes which are difficult to create using convention-based routing. For example below routes.
+
+
+Q50.How will you unit test a controller?
+------------------------------------------------------------------------------------
+To unit test a controller in ASP.NET Core, we isolate the controller's logic and mock any external dependencies (like services or repositories) using libraries like Moq.
+
+For example, in a controller that relies on a service to fetch data, I can mock that service to return predefined data, and then test if the controller behaves correctly (such as returning the right HTTP status code or data).
+
+This process ensures that we test only the controller's logic without relying on external resources like databases or APIs.
+
+1. Install the Testing Libraries:
+You’ll need to install a few libraries to set up unit tests:
+
+xUnit: A testing framework.
+
+Moq: A popular library for mocking dependencies (like services or data access).
+
+You can add these using NuGet:
+dotnet add package xunit
+dotnet add package Moq
+Create a Simple Controller to Test:
+Let’s say you have a simple ProductController:
+public class ProductController : Controller
+{
+    private readonly IProductService _productService;
+
+    public ProductController(IProductService productService)
+    {
+        _productService = productService;
+    }
+
+    public IActionResult GetAllProducts()
+    {
+        var products = _productService.GetProducts();
+        return Ok(products);
+    }
+}
+Here, the controller depends on an IProductService to get product data.
+
+3. Mock the Dependencies:
+You don't want to call the actual service, so you'll mock it using Moq. A mock is a fake implementation that returns data you specify, which allows you to isolate the controller logic.
+
+4. Write the Unit Test:
+Now, you can write a unit test for the GetAllProducts method.
+using Moq;
+using Xunit;
+using Microsoft.AspNetCore.Mvc;
+using YourApp.Controllers;
+using YourApp.Services;
+
+public class ProductControllerTests
+{
+    [Fact]
+    public void GetAllProducts_ReturnsOkResult_WithProductList()
+    {
+        // Arrange: Mock the service and setup the return data
+        var mockService = new Mock<IProductService>();
+        mockService.Setup(service => service.GetProducts()).Returns(new List<Product>
+        {
+            new Product { Id = 1, Name = "Product 1" },
+            new Product { Id = 2, Name = "Product 2" }
+        });
+
+        var controller = new ProductController(mockService.Object);
+
+        // Act: Call the method under test
+        var result = controller.GetAllProducts();
+
+        // Assert: Check the result
+        var okResult = Assert.IsType<OkObjectResult>(result); // Check if it's an OkObjectResult
+        var returnValue = Assert.IsAssignableFrom<List<Product>>(okResult.Value); // Check if the returned value is a List<Product>
+        Assert.Equal(2, returnValue.Count); // Check if the list has 2 products
+    }
+}
+
+
+Q51. What is Cache Tag Helper? (Simple Words)
+------------------------------------------------------------------------------------
+The Cache Tag Helper in ASP.NET Core MVC allows you to cache parts of a page's content, improving the performance by reducing the need to regenerate that content on every request.
+You wrap the content you want to cache inside a <cache> tag and specify how long to cache it. For example, caching dynamic content like product counts or latest news for a few minutes can save resources and speed up page loading.
+
+👉 The Cache Tag Helper in ASP.NET Core MVC is used to cache HTML content in a web page to improve performance.
+
+Imagine your web page has some dynamic content (like the latest product prices, or current weather). The Cache Tag Helper allows you to cache this content for a set period of time, so the server doesn't have to regenerate it every time a user requests the page.
+
+Think of it like:
+If your page has some parts that don’t change often (like a menu or footer), the Cache Tag Helper will store (cache) that part of the page and reuse it for subsequent requests, making the page load faster.
+
+🎯 Why Use Cache Tag Helper?
+Performance Boost: It can speed up your website by reducing the load on the server.
+
+Avoid Repeated Work: If part of the page doesn't change frequently, there's no need to recompute it every time.
+
+Scalable: Caching helps you handle more traffic by serving cached content to users instead of generating it every time.
+
+📚 How Does Cache Tag Helper Work?
+When you use the Cache Tag Helper, you wrap the content that you want to cache inside a <cache> tag in your Razor view. The content inside this tag will be cached for the specified duration.
+
+When a user requests the same page, instead of regenerating that content, ASP.NET Core serves the cached version from memory, improving performance.
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<div>
+    <h2>Product Count</h2>
+
+    <cache duration="00:05:00">
+        <p>@Model.ProductCount</p>
+    </cache>
+</div>
+
+
+
+Q52. How validation works in MVC and how they follow DRY Pattern?
+------------------------------------------------------------------------------------
+How Does Validation Work in MVC? (Simple Words)
+Validation in ASP.NET Core MVC ensures that the data submitted by the user is correct before it gets processed or saved in the database. It checks things like:
+
+Is the email address in the correct format?
+
+Is the password long enough?
+
+Are all required fields filled out?
+
+How it works:
+Client-side Validation (using JavaScript): The browser checks if the input data meets the required rules before sending it to the server. This makes the experience faster.
+
+Server-side Validation (in C# code): The server checks the input data to ensure it’s valid and secure (this is critical because client-side validation can be bypassed).
+
+Where Does Validation Happen in MVC?
+Validation happens in two places in MVC:
+
+Data Annotations: These are simple attributes you place on your model properties to enforce validation rules.
+
+Example:
+public class User
+{
+    [Required(ErrorMessage = "Username is required")]
+    [StringLength(50, ErrorMessage = "Username cannot exceed 50 characters")]
+    public string Username { get; set; }
+
+    [Required(ErrorMessage = "Email is required")]
+    [EmailAddress(ErrorMessage = "Invalid email address")]
+    public string Email { get; set; }
+}
+How Does Validation Follow DRY (Don't Repeat Yourself)?
+The DRY principle is all about avoiding repetition. In validation, this means you don’t need to manually repeat validation rules in multiple places. Instead, you centralize the validation logic in the model (using data annotations), so it can be reused throughout the application without having to write the same validation code repeatedly.
+
+How it follows the DRY principle:
+Single Source of Truth: The validation rules are defined once in the model using data annotations (like [Required], [StringLength], etc.).
+
+Automatic Validation: When you bind a model to a form in your view, ASP.NET Core MVC automatically handles the validation for you. You don't need to repeat the logic in the controller or view.
+
+
+
+
+Q53.  Describe the complete request processing pipeline for ASP.NET Core MVC.
+------------------------------------------------------------------------------------
+In ASP.NET Core MVC, the request processing pipeline is a sequence of steps that handle a request from the browser.
+First, the request goes through middleware for things like logging or authentication.
+Then, routing determines which controller and action method should handle the request.
+The controller is activated, and the appropriate action runs. Finally, the view is rendered and sent back as an HTTP response, completing the request processing.
+
+
+In ASP.NET Core MVC, the request processing pipeline is the sequence of steps that happen when the server receives a request from the client (usually a browser) until it sends a response back.
+
+Think of it like a factory: the request comes in (like raw materials), passes through various stages (like production lines), and finally the response is sent back to the client.
+
+🧳 The 6 Main Steps in the Request Processing Pipeline
+Let’s break down each step in simple terms so you can remember it for a long time:
+
+1. Request Comes In (HTTP Request)
+When a client (like a browser) sends an HTTP request to the server, the request goes through the middleware pipeline.
+
+Example: A user types www.example.com/products in their browser.
+
+2. Middleware (Key Concept: The Gatekeepers)
+Middleware is like the checkpoint where different components inspect, modify, or decide what happens with the request. Think of them as gatekeepers in the pipeline.
+
+Each middleware component runs in the order they are added in Startup.cs.
+
+They can do things like:
+
+Logging request info.
+
+Authenticating users.
+
+Handling errors.
+
+Middleware does not always handle the request directly; it can either pass it to the next middleware or stop the request at any point.
+
+3. Routing (Finding the Right Controller and Action)
+Once the request passes through the middleware, the Routing Middleware takes over. It decides which controller and action method to call based on the URL.
+
+URL pattern matching is done by the routing system.
+
+For example, the URL /products/details/3 would map to the ProductsController and call the Details action with the id parameter set to 3.
+
+Example: The Route /products/details/{id} maps to the Details action of ProductsController.
+
+4. Controller Activation (Getting the Controller)
+Once routing has determined the right controller and action method, the Controller Activation happens. This is where the controller is created by dependency injection (DI), which gives the controller access to services like databases, logging, etc.
+
+Example: When the ProductsController is created, it might need a service like IProductService to get product data. ASP.NET Core injects that service into the controller automatically.
+
+5. Action Execution (Running the Controller Action)
+After the controller is activated, the action method inside the controller is called. This is where the logic of your application happens.
+
+For example, in the ProductsController, the Details action might get a product from the database and pass it to the view.
+
+6. View Rendering (Response)
+Finally, after the action executes, the View is rendered and returned as a response to the client. This is where the server sends back the HTML that will be displayed in the user’s browser.
+
+Example: If the action is successful, the server will render a view (like Details.cshtml) with the data from the controller (like the product information).
+
+
+
+Breakdown of the Request Pipeline Steps:
+Request comes in (from the browser).
+
+Middleware checks and processes the request (logging, authentication, etc.).
+
+Routing determines which controller and action to invoke.
+
+Controller Activation creates the controller and injects dependencies.
+
+Action Execution runs the controller action (business logic).
+
+View Rendering generates HTML and sends the response back to the browser.
+
+
+

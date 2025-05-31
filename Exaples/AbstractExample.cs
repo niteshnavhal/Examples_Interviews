@@ -8,7 +8,7 @@ namespace Exaples
 {
     internal class AbstractExample
     {
-        abstract class Animal
+        public abstract class Animal
         {
             public abstract void makeSund();
         }

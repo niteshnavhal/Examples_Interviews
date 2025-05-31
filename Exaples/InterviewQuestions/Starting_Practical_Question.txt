@@ -1,0 +1,322 @@
+﻿SQL Interview Questions - HR
+==========================================
+
+Q1: Tell Me About Yourself
+---------------------------------------------------------------------------
+
+I’m a dedicated Senior .NET Developer with several years of experience designing and developing RESTful APIs using .NET Core, following clean architecture and repository pattern. My daily responsibilities involve building and consuming APIs, managing CMS content modules, and working on dynamic frontend pages for listing, detail, update, and reporting functionalities.
+
+I’ve worked extensively with MS SQL Server, where I create complex stored procedures tailored to reporting APIs and views, often combining data from multiple tables. I also configure sub-reports based on business needs.
+
+On the deployment side, I handle IIS setup, manage publish profiles, and ensure smooth CI/CD processes using Bitbucket for code versioning.
+
+One of my recent exciting projects involved developing a live cricket scoring panel. This included team and player management, real-time event tracking based on cricket rules, and broadcasting live data using SignalR and jQuery.
+
+I'm passionate about delivering scalable solutions and continuously improving systems to meet dynamic business needs. I'm excited for the opportunity to bring my skills to a senior role and contribute effectively from day one.
+
+Q2: JWT Token Setup in .NET 8 (Short Version)
+---------------------------------------------------------------------------
+
+1. **Install NuGet Packages**:
+   - Microsoft.AspNetCore.Authentication.JwtBearer
+   - System.IdentityModel.Tokens.Jwt
+   - Microsoft.IdentityModel.Tokens
+   - Microsoft.AspNetCore.Authentication
+   - Microsoft.AspNetCore.Authorization
+   2. **Configure JWT in Startup.cs**:
+   ```csharp
+   public void ConfigureServices(IServiceCollection services)
+   {
+	   services.AddAuthentication(options =>
+	   {
+		   options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+		   options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+	   })
+	   .AddJwtBearer(options =>
+	   {
+		   options.TokenValidationParameters = new TokenValidationParameters
+		   {
+			   ValidateIssuer = true,
+			   ValidateAudience = true,
+			   ValidateLifetime = true,
+			   ValidateIssuerSigningKey = true,
+			   ValidIssuer = Configuration["Jwt:Issuer"],
+			   ValidAudience = Configuration["Jwt:Audience"],
+			   IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"]))
+		   };
+	   });
+	   services.AddAuthorization(options =>
+	   {
+		   options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+	   });
+   }
+   ```
+   ---------------->
+   var token = new JwtSecurityToken(
+    issuer: "yourIssuer",
+    audience: "yourAudience",
+    expires: DateTime.Now.AddHours(1),
+    signingCredentials: new SigningCredentials(
+        new SymmetricSecurityKey(Encoding.UTF8.GetBytes("Your_Secret_Key")),
+        SecurityAlgorithms.HmacSha256)
+);
+
+return new JwtSecurityTokenHandler().WriteToken(token);
+
+
+Q3: SignalR Short Example (Backend + Client)
+---------------------------------------------------------------------------
+1. **Backend Setup**:
+   - Install NuGet Package: Microsoft.AspNetCore.SignalR
+   - In Startup.cs:
+   ```csharp
+   public void ConfigureServices(IServiceCollection services)
+   {
+	   services.AddSignalR();
+   }
+   public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+   {
+	   app.UseRouting();
+	   app.UseEndpoints(endpoints =>
+	   {
+		   endpoints.MapHub<YourHub>("/yourHub");
+	   });
+   }
+   ```
+   - Create Hub Class:
+   ```csharp
+   public class YourHub : Hub
+   {
+	   public async Task SendMessage(string user, string message)
+	   {
+		   await Clients.All.SendAsync("ReceiveMessage", user, message);
+	   }
+   }
+   ```
+   2. **Client Setup**:
+   - Install SignalR Client Library: Microsoft.AspNetCore.SignalR.Client
+   - In your JavaScript file:
+   ```javascript
+   const connection = new signalR.HubConnectionBuilder()
+	   .withUrl("/yourHub")
+	   .build();
+	  
+
+
+Q4. How to Get Configuration from appsettings.json?
+------------------------------------------------------------------------------------
+public class HomeController : Controller
+{
+    private readonly IConfiguration _configuration;
+
+    public HomeController(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
+    public IActionResult Index()
+    {
+        string appName = _configuration["MySettings:AppName"];
+        string version = _configuration["MySettings:Version"];
+
+        ViewBag.AppName = appName;
+        ViewBag.Version = version;
+
+        return View();
+    }
+}
+
+
+Q5. Example the dependency injection.?
+------------------------------------------------------------------------------------
+// 1. Create an Interface
+public interface IMessageService
+{
+    string GetMessage();
+}
+
+// 2. Create a Class that Implements it
+public class HelloMessageService : IMessageService
+{
+    public string GetMessage()
+    {
+        return "Hello from Message Service!";
+    }
+}
+
+// 3. Inject it into a Controller
+public class HomeController : Controller
+{
+    private readonly IMessageService _messageService;
+
+    // Constructor Injection
+    public HomeController(IMessageService messageService)
+    {
+        _messageService = messageService;
+    }
+
+    public IActionResult Index()
+    {
+        var message = _messageService.GetMessage();
+        ViewBag.Message = message;
+        return View();
+    }
+}
+
+Q6.  Example of Middleware Setup in Program.cs?
+------------------------------------------------------------------------------------
+var app = builder.Build();
+
+app.UseRouting();         // Find the route
+app.UseAuthentication();  // Check user identity
+app.UseAuthorization();   // Check user permissions
+
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+});
+
+Q7. Custom Middleware Example?
+------------------------------------------------------------------------------------
+public class RequestTimeLoggingMiddleware
+{
+    private readonly RequestDelegate _next;
+
+    public RequestTimeLoggingMiddleware(RequestDelegate next)
+    {
+        _next = next;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        var startTime = DateTime.Now;
+        
+        // Call the next middleware in the pipeline
+        await _next(context);
+        
+        var endTime = DateTime.Now;
+        var duration = endTime - startTime;
+        Console.WriteLine($"Request took {duration.TotalMilliseconds} ms");
+    }
+}
+
+Q8. Create a Custom Action Filter?
+------------------------------------------------------------------------------------
+public class SimpleLogFilter : ActionFilterAttribute
+{
+    public override void OnActionExecuting(ActionExecutingContext context)
+    {
+        Console.WriteLine($"Action {context.ActionDescriptor.DisplayName} is executing.");
+    }
+}
+[SimpleLogFilter]
+public class HomeController : Controller
+{
+    [HttpGet]
+    public IActionResult Index()
+    {
+        return View();
+    }
+}
+
+
+
+Q9. What is Logging in ASP.NET Core?
+------------------------------------------------------------------------------------
+public class HomeController : Controller
+{
+    private readonly ILogger<HomeController> _logger;
+
+    // Inject ILogger through Constructor
+    public HomeController(ILogger<HomeController> logger)
+    {
+        _logger = logger;
+    }
+
+    public IActionResult Index()
+    {
+        _logger.LogInformation("Index page loaded successfully."); // Log Info
+
+        try
+        {
+            // Some logic
+            int x = 0;
+            int y = 5 / x; // Will cause error
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while processing request."); // Log Error
+        }
+
+        return View();
+    }
+}
+
+
+Q10. Explain the concept of routing.
+------------------------------------------------------------------------------------
+
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Home}/{action=Index}/{id?}");
+});
+
+
+[Route("products")]
+public class ProductsController : Controller
+{
+    [HttpGet("details/{id}")]
+    public IActionResult Details(int id)
+    {
+        return Content($"Product ID: {id}");
+    }
+}
+
+
+
+Q11. How to use SignalR in ASP.NET Core?
+------------------------------------------------------------------------------------
+1. **Server Setup**:
+   - Install SignalR NuGet Package: Microsoft.AspNetCore.SignalR
+   - In your Startup.cs:
+   ```csharp
+   public void ConfigureServices(IServiceCollection services)
+   {
+       services.AddSignalR();
+   }
+   public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+   {
+       app.UseRouting();
+       app.UseEndpoints(endpoints =>
+       {
+           endpoints.MapHub<YourHub>("/yourHub");
+       });
+   }
+   ```
+   - Create Hub Class:
+   ```csharp
+   public class YourHub : Hub
+   {
+       public async Task SendMessage(string user, string message)
+       {
+           await Clients.All.SendAsync("ReceiveMessage", user, message);
+       }
+   }
+   ```
+   2. **Client Setup**:
+   - Install SignalR Client Library: Microsoft.AspNetCore.SignalR.Client
+   - In your JavaScript file:
+   ```javascript
+   const connection = new signalR.HubConnectionBuilder()
+       .withUrl("/yourHub")
+       .build();
+       connection.on("ReceiveMessage", (user, message) => {
+       const msg = `${user}: ${message}`;
+           console.log(msg);
+       });
+       connection.start()
+           .then(() => console.log("Connected to SignalR Hub"))
+           .catch(err => console.error(err));
+           ```

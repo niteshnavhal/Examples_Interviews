@@ -24,13 +24,13 @@ class program
             { "13", () => new ThreadSafetyExample().Run() },
             { "14", () => new AbstractExample().Run() },
             { "15", () => new AbstractWithBody().Run() },
-              { "16", () => new password().Run() }
+            { "16", () => new password().Run() },
+            { "17", () => new FibonacciExample().Run() }
         };
 
         bool continueApp = true;
 
         while (continueApp)
-
         {
             Console.WriteLine("\nChoose an option:");
             Console.WriteLine("1 - Calculator");
@@ -49,6 +49,7 @@ class program
             Console.WriteLine("14 - AbstractExample");
             Console.WriteLine("15 - AbstractWithBody");
             Console.WriteLine("16 - AbstractWithBody");
+            Console.WriteLine("17 - FibonacciExample");
 
             //Console.WriteLine("10 - Threading Example");
             Console.WriteLine("0 - Exit");
